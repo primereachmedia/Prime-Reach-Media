@@ -12,38 +12,31 @@ const PUBLIC_KEY = "vMMvROc8gfXWbU0Ge";
 
 /**
  * Sends a verification email via EmailJS
+ * Returns the passcode so the frontend can simulate verification.
  */
-export const sendVerificationEmail = async (email: string, role: string): Promise<{ success: boolean; error?: string }> => {
+export const sendVerificationEmail = async (email: string, role: string): Promise<{ success: boolean; passcode?: string; error?: string }> => {
   try {
-    // Basic validation
     if (!email || !email.includes('@')) {
       return { success: false, error: 'INVALID_EMAIL_PROVIDED' };
     }
 
     console.log(`[EmailService] Preparing transmission for: ${email}`);
 
-    // Explicitly initialize with the Public Key
     emailjs.init(PUBLIC_KEY);
 
-    // Generate a simulated 6-digit OTP passcode as seen in the template screenshot
+    // Generate a 6-digit OTP passcode
     const generatedPasscode = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Calculate expiry time (15 minutes from now) for the {{time}} variable
+    // Calculate expiry time (15 minutes from now)
     const expiryDate = new Date(Date.now() + 15 * 60000);
     const timeString = expiryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    /**
-     * templateParams matches the variables in your EmailJS template screenshot:
-     * - {{to_email}}: Used in the "To Email" field
-     * - {{passcode}}: The One Time Password
-     * - {{time}}: The expiration time
-     */
     const templateParams = {
       to_email: email,      
       passcode: generatedPasscode,
       time: timeString,
       user_role: role.toUpperCase(),
-      reply_to: 'primereachmediamarket@gmail.com' // Matching your template's reply-to
+      reply_to: 'primereachmediamarket@gmail.com'
     };
 
     const response = await emailjs.send(
@@ -53,8 +46,8 @@ export const sendVerificationEmail = async (email: string, role: string): Promis
     );
 
     if (response.status === 200) {
-      console.log('[EmailService] Transmission successful with passcode:', generatedPasscode);
-      return { success: true };
+      console.log('[EmailService] Transmission successful.');
+      return { success: true, passcode: generatedPasscode };
     } else {
       console.error('[EmailService] API Error:', response);
       return { success: false, error: response.text || `Error ${response.status}` };
@@ -62,7 +55,6 @@ export const sendVerificationEmail = async (email: string, role: string): Promis
 
   } catch (err: any) {
     console.error('[EmailService] Exception:', err);
-    // Surface the actual error text from EmailJS
     const errorMsg = err?.text || err?.message || 'CONNECTION_FAILED';
     return { success: false, error: errorMsg };
   }
