@@ -6,10 +6,13 @@ interface ProfileBuilderProps {
   userEmail: string;
   initialWalletAddress?: string | null;
   initialTwitterHandle?: string | null;
+  isTwitterVerified: boolean;
+  onUpdate: (data: any) => void;
   onSave: (data: any) => void;
+  onLogout: () => void;
 }
 
-const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, initialTwitterHandle, onSave }) => {
+const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, initialTwitterHandle, isTwitterVerified, onUpdate, onSave, onLogout }) => {
   const [formData, setFormData] = useState({
     companyName: initialTwitterHandle || '',
     mission: '',
@@ -19,12 +22,16 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     primaryObjective: '',
     audienceDescription: '',
     image: null as string | null,
-    walletAddress: initialWalletAddress || null as string | null
+    walletAddress: initialWalletAddress || null as string | null,
+    twitterHandle: initialTwitterHandle || null as string | null,
+    isTwitterVerified: isTwitterVerified
   });
 
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isVerifyingX, setIsVerifyingX] = useState(false);
   const [connectionStep, setConnectionStep] = useState<'idle' | 'connecting' | 'signing'>('idle');
   const [phantomError, setPhantomError] = useState<string | null>(null);
+  const [isTerminating, setIsTerminating] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,6 +42,24 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleConnectX = () => {
+    setIsVerifyingX(true);
+    // Simulate X Identity Scanning Protocol
+    setTimeout(() => {
+      const mockHandle = `@PRM_${Math.floor(Math.random() * 10000)}`;
+      const mockVerified = Math.random() > 0.3; // 70% chance of being blue check verified for demo
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        twitterHandle: mockHandle,
+        isTwitterVerified: mockVerified,
+        companyName: mockHandle
+      }));
+      onUpdate({ twitterHandle: mockHandle, isTwitterVerified: mockVerified });
+      setIsVerifyingX(false);
+    }, 2000);
   };
 
   const handleConnectWallet = async () => {
@@ -51,19 +76,17 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     setPhantomError(null);
 
     try {
-      // 1. Initial Connection Handshake
       const response = await solana.connect();
       const publicKey = response.publicKey.toString();
       
-      // 2. Mandatory Signature Handshake (Prevents Auto-Reconnect bypass)
       setConnectionStep('signing');
       const message = `AUTHENTICATE WITH PRIME REACH MEDIA\n\nUser: ${userEmail}\nTimestamp: ${Date.now()}\nStatus: Required Handshake`;
       const encodedMessage = new TextEncoder().encode(message);
       
       try {
         await solana.signMessage(encodedMessage, "utf8");
-        // Only set the wallet address if the signature is successful
         setFormData(prev => ({ ...prev, walletAddress: publicKey }));
+        onUpdate({ walletAddress: publicKey });
       } catch (signErr: any) {
         throw new Error('SIGNATURE REJECTED. MANUAL APPROVAL IS MANDATORY.');
       }
@@ -82,13 +105,20 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       try {
         await solana.disconnect();
         setFormData(prev => ({ ...prev, walletAddress: null }));
+        onUpdate({ walletAddress: null });
       } catch (err) {
-        console.error('[Wallet] Disconnect failed:', err);
         setFormData(prev => ({ ...prev, walletAddress: null }));
       }
     } else {
       setFormData(prev => ({ ...prev, walletAddress: null }));
     }
+  };
+
+  const handleIdentityTermination = () => {
+    setIsTerminating(true);
+    setTimeout(() => {
+      onLogout();
+    }, 1500);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,9 +131,30 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const industries = ['Crypto', 'Gaming', 'SaaS', 'Ecommerce', 'Media', 'Other'];
   const objectives = ['Brand awareness', 'Product launch', 'Conversions', 'Community growth'];
 
+  if (isTerminating) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 border-4 border-jetblue border-t-transparent rounded-full animate-spin mb-8"></div>
+        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-4">PURGING IDENTITY SESSION</h2>
+        <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-xs">DE-AUTHENTICATING SECURE HANDSHAKE...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
+        
+        <div className="flex justify-end mb-8">
+           <button 
+             onClick={handleIdentityTermination}
+             className="flex items-center gap-3 px-6 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-red-500/50 hover:bg-red-500/5 transition-all group"
+           >
+             <div className="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-red-500 animate-pulse"></div>
+             <span className="text-[10px] font-black text-slate-500 group-hover:text-red-500 uppercase tracking-widest">Terminate Identity Session</span>
+           </button>
+        </div>
+
         <div className="mb-12">
           <div className="flex items-center gap-4 mb-2">
              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
@@ -119,21 +170,12 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800 transition-all hover:shadow-2xl hover:shadow-jetblue/10">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">01</span>
-              Stream Branding Asset
+              Branding Hub
             </h2>
             
             <div className="relative flex justify-center">
-              <input 
-                type="file" 
-                id="branding-asset" 
-                className="hidden" 
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              <label 
-                htmlFor="branding-asset"
-                className="block w-full max-w-[450px] aspect-square rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-slate-800 hover:border-jetblue dark:hover:border-jetblue transition-all cursor-pointer overflow-hidden relative group bg-slate-50 dark:bg-slate-950 shadow-inner"
-              >
+              <input type="file" id="branding-asset" className="hidden" accept="image/*" onChange={handleImageChange} />
+              <label htmlFor="branding-asset" className="block w-full max-w-[450px] aspect-square rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-slate-800 hover:border-jetblue dark:hover:border-jetblue transition-all cursor-pointer overflow-hidden relative group bg-slate-50 dark:bg-slate-950 shadow-inner">
                 {formData.image ? (
                   <div className="relative w-full h-full">
                     <img src={formData.image} className="w-full h-full object-cover" alt="Branding" />
@@ -149,7 +191,6 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       </svg>
                     </div>
                     <span className="text-xs font-black uppercase tracking-[0.2em] leading-relaxed">Click to Upload Master Asset</span>
-                    <p className="text-[10px] font-bold mt-4 opacity-60 italic uppercase tracking-tighter">Square Format (1024x1024) Required for Platform Branding</p>
                   </div>
                 )}
               </label>
@@ -159,104 +200,93 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">02</span>
-              Identity & Connectivity
+              Identity & Verification
             </h2>
+
+            {/* X Verification Hub */}
+            <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all duration-300 mb-10 ${formData.twitterHandle ? 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800' : 'bg-jetblue/5 border-jetblue/20'}`}>
+               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-start gap-5">
+                    <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white shadow-xl">
+                       <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-3">
+                         X Professional Connect
+                         {formData.twitterHandle && (
+                           formData.isTwitterVerified ? (
+                             <svg className="w-5 h-5 text-blue-500 animate-in zoom-in" fill="currentColor" viewBox="0 0 24 24">
+                               <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z" />
+                             </svg>
+                           ) : (
+                             <svg className="w-5 h-5 text-red-500 animate-in zoom-in" fill="currentColor" viewBox="0 0 24 24">
+                               <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05z" />
+                             </svg>
+                           )
+                         )}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight italic">
+                        {formData.twitterHandle ? `CONNECTED TO ACCOUNT: ${formData.twitterHandle}` : 'Link your X profile to verify audience authority.'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {formData.twitterHandle ? (
+                    <button type="button" onClick={handleConnectX} className="px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-jetblue transition-all">Re-Verify Handle</button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectX}
+                      disabled={isVerifyingX}
+                      className="px-10 py-5 bg-black text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+                    >
+                      {isVerifyingX ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>}
+                      {isVerifyingX ? 'SCANNING IDENTITY...' : 'Verify Identity via X'}
+                    </button>
+                  )}
+               </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  Authenticated Identifier 
-                  <svg className="w-3 h-3 text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Login Identifier</label>
                 <div className="relative">
-                   <input 
-                    type="text" 
-                    value={initialTwitterHandle || userEmail}
-                    disabled
-                    className="w-full bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold text-slate-400 cursor-not-allowed opacity-80"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-jetblue uppercase tracking-tighter">
-                    {initialTwitterHandle ? 'X Verified' : 'Email Verified'}
-                  </div>
+                   <input type="text" value={userEmail} disabled className="w-full bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold text-slate-400 cursor-not-allowed opacity-80" />
+                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-jetblue uppercase tracking-tighter">Email Verified</div>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Entity Name</label>
-                <input 
-                  type="text" 
-                  value={formData.companyName}
-                  onChange={(e) => setFormData(prev => ({...prev, companyName: e.target.value}))}
-                  placeholder="EX: PRIME REACH MEDIA"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner"
-                />
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Entity Display Name</label>
+                <input type="text" value={formData.companyName} onChange={(e) => setFormData(prev => ({...prev, companyName: e.target.value}))} placeholder="EX: PRIME REACH MEDIA" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner" />
               </div>
             </div>
 
             <div className="mb-10">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Mission Statement</label>
-              <input 
-                type="text" 
-                value={formData.mission}
-                onChange={(e) => setFormData(prev => ({...prev, mission: e.target.value}))}
-                placeholder="DEFINE YOUR CORE PURPOSE IN ONE PRECISE SENTENCE"
-                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner"
-              />
+              <input type="text" value={formData.mission} onChange={(e) => setFormData(prev => ({...prev, mission: e.target.value}))} placeholder="DEFINE YOUR CORE PURPOSE IN ONE PRECISE SENTENCE" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner" />
             </div>
 
             <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/30' : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800'} mb-10`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800">
-                    <svg className="w-8 h-8 text-jetblue dark:text-jetblue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                  </div>
+                  <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800"><svg className="w-8 h-8 text-jetblue dark:text-jetblue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg></div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                      Secured Wallet Integration
-                      {!formData.walletAddress && <span className="text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded tracking-tighter">MANDATORY HANDSHAKE</span>}
-                    </h4>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight max-w-sm leading-relaxed italic">
-                      Manual signature required for every connection. You don't have to connect your wallet now, but you must connect before any purchase.
-                    </p>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Secured Wallet Link</h4>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight italic">Manual signature required for every connection. Mandatory for all marketplace transactions.</p>
                   </div>
                 </div>
-
                 {formData.walletAddress ? (
                   <div className="flex flex-col items-end gap-3">
                     <div className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/30 text-green-500 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl">
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-500/50"></div>
-                      AUTHENTICATED: {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>AUTHENTICATED: {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={handleDisconnectWallet}
-                      className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-all hover:tracking-[0.3em]"
-                    >
-                      [ Kill Session & Disconnect ]
-                    </button>
+                    <button type="button" onClick={handleDisconnectWallet} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-all hover:tracking-[0.3em]">[ Kill Session & Disconnect ]</button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleConnectWallet}
-                      disabled={isConnecting}
-                      className="px-10 py-5 bg-jetblue text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-jetblue/20 flex items-center gap-3 group"
-                    >
-                      {isConnecting ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                      )}
-                      {connectionStep === 'connecting' ? 'CONNECTING...' : connectionStep === 'signing' ? 'WAITING FOR SIGNATURE...' : 'Link Provider Wallet'}
-                    </button>
-                    {phantomError && <p className="text-[9px] font-black text-red-500 text-center max-w-[220px] leading-tight tracking-widest animate-bounce uppercase">{phantomError}</p>}
-                  </div>
+                  <button type="button" onClick={handleConnectWallet} disabled={isConnecting} className="px-10 py-5 bg-jetblue text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-jetblue/20 flex items-center gap-3">
+                    {isConnecting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>}
+                    {connectionStep === 'connecting' ? 'CONNECTING...' : connectionStep === 'signing' ? 'WAITING FOR SIGNATURE...' : 'Link Provider Wallet'}
+                  </button>
                 )}
               </div>
             </div>
@@ -266,46 +296,15 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Company Structure</label>
                 <div className="flex flex-wrap gap-3">
                   {companyTypes.map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setFormData(prev => ({...prev, companyType: type}))}
-                      className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.companyType === type ? 'bg-jetblue text-white shadow-lg scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:border-jetblue border-2 border-transparent'}`}
-                    >
-                      {type}
-                    </button>
+                    <button key={type} type="button" onClick={() => setFormData(prev => ({...prev, companyType: type}))} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.companyType === type ? 'bg-jetblue text-white shadow-lg scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:border-jetblue border-2 border-transparent'}`}>{type}</button>
                   ))}
                 </div>
               </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tenure in Business</label>
-                <div className="flex flex-wrap gap-3">
-                  {businessTimes.map(time => (
-                    <button
-                      key={time}
-                      type="button"
-                      onClick={() => setFormData(prev => ({...prev, timeInBusiness: time}))}
-                      className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.timeInBusiness === time ? 'bg-jetblue text-white shadow-lg scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:border-jetblue border-2 border-transparent'}`}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Core Industry</label>
                 <div className="flex flex-wrap gap-3">
                   {industries.map(ind => (
-                    <button
-                      key={ind}
-                      type="button"
-                      onClick={() => setFormData(prev => ({...prev, industry: ind}))}
-                      className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.industry === ind ? 'bg-prmgold text-white shadow-lg shadow-prmgold/20 scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:border-prmgold border-2 border-transparent'}`}
-                    >
-                      {ind}
-                    </button>
+                    <button key={ind} type="button" onClick={() => setFormData(prev => ({...prev, industry: ind}))} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.industry === ind ? 'bg-prmgold text-white shadow-lg shadow-prmgold/20 scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:border-prmgold border-2 border-transparent'}`}>{ind}</button>
                   ))}
                 </div>
               </div>
@@ -313,37 +312,19 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           </section>
 
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">03</span>
-              Strategic Goals
-            </h2>
-
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3"><span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">03</span>Strategic Goals</h2>
             <div className="space-y-10">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Primary Objective</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {objectives.map(obj => (
-                    <button
-                      key={obj}
-                      type="button"
-                      onClick={() => setFormData(prev => ({...prev, primaryObjective: obj}))}
-                      className={`px-4 py-4 rounded-xl text-[9px] font-black uppercase text-center tracking-tight leading-tight transition-all border-2 ${formData.primaryObjective === obj ? 'bg-jetblue border-jetblue text-white shadow-xl scale-105' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 hover:border-jetblue/30'}`}
-                    >
-                      {obj}
-                    </button>
+                    <button key={obj} type="button" onClick={() => setFormData(prev => ({...prev, primaryObjective: obj}))} className={`px-4 py-4 rounded-xl text-[9px] font-black uppercase text-center tracking-tight leading-tight transition-all border-2 ${formData.primaryObjective === obj ? 'bg-jetblue border-jetblue text-white shadow-xl scale-105' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 hover:border-jetblue/30'}`}>{obj}</button>
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Target Audience Architecture</label>
-                <textarea 
-                  rows={4}
-                  value={formData.audienceDescription}
-                  onChange={(e) => setFormData(prev => ({...prev, audienceDescription: e.target.value}))}
-                  placeholder="DESCRIBE THE DEMOGRAPHICS, PSYCHOGRAPHICS, AND NICHE SEGMENTS YOU ARE TARGETING..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none shadow-inner"
-                />
+                <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(prev => ({...prev, audienceDescription: e.target.value}))} placeholder="DESCRIBE THE DEMOGRAPHICS, PSYCHOGRAPHICS, AND NICHE SEGMENTS YOU ARE TARGETING..." className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none shadow-inner" />
               </div>
             </div>
           </section>
@@ -351,21 +332,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <div className="flex flex-col md:flex-row justify-end gap-6 items-center border-t border-slate-100 dark:border-slate-800 pt-12">
             <div className="text-right">
               <p className="text-[9px] font-black text-jetblue uppercase tracking-[0.3em] mb-1">DATA INTEGRITY PROTOCOL</p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase max-w-[320px] leading-tight tracking-tight">
-                Profile deployment will lock your entity profile to the PRM decentralized marketplace registry. Wallet connectivity can be finalized later.
-              </p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase max-w-[320px] leading-tight tracking-tight">Profile deployment will lock your entity profile to the PRM decentralized marketplace registry. Verification data will be stored on-chain.</p>
             </div>
-            <button 
-              type="submit"
-              className="w-full md:w-auto px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95 border-b-4 border-jetblue-dark flex items-center justify-center gap-3"
-            >
+            <button type="submit" className="w-full md:w-auto px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95 border-b-4 border-jetblue-dark flex items-center justify-center gap-3">
               Lock & Deploy Profile
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </button>
           </div>
-
         </form>
       </div>
     </div>

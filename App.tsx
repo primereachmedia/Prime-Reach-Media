@@ -14,6 +14,7 @@ interface UserState {
   hasProfile: boolean;
   walletAddress: string | null;
   twitterHandle: string | null;
+  isTwitterVerified: boolean;
 }
 
 const App: React.FC = () => {
@@ -24,7 +25,8 @@ const App: React.FC = () => {
     role: null,
     hasProfile: false,
     walletAddress: null,
-    twitterHandle: null
+    twitterHandle: null,
+    isTwitterVerified: false
   });
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
     isOpen: false,
@@ -39,17 +41,36 @@ const App: React.FC = () => {
     setAuthModal({ isOpen: true, mode });
   };
 
-  const handleLoginSuccess = (email: string, role: string, twitterHandle?: string) => {
+  const handleLoginSuccess = (email: string, role: string) => {
     setUser(prev => ({
       ...prev,
       isLoggedIn: true,
       email,
       role: role as any,
-      hasProfile: false,
-      twitterHandle: twitterHandle || null
+      hasProfile: false
     }));
     setAuthModal(prev => ({ ...prev, isOpen: false }));
     setView('profile');
+  };
+
+  const handleLogout = () => {
+    setUser({
+      isLoggedIn: false,
+      email: null,
+      role: null,
+      hasProfile: false,
+      walletAddress: null,
+      twitterHandle: null,
+      isTwitterVerified: false
+    });
+    setView('landing');
+  };
+
+  const handleProfileUpdate = (data: any) => {
+    setUser(prev => ({ 
+      ...prev, 
+      ...data
+    }));
   };
 
   const handleProfileSave = (data: any) => {
@@ -71,6 +92,7 @@ const App: React.FC = () => {
         userRole={user.role}
         onProfileClick={navigateToProfile}
         twitterHandle={user.twitterHandle}
+        isVerified={user.isTwitterVerified}
       />
       
       <main className="flex-grow">
@@ -80,7 +102,10 @@ const App: React.FC = () => {
             userEmail={user.email || ''}
             initialWalletAddress={user.walletAddress}
             initialTwitterHandle={user.twitterHandle}
-            onSave={handleProfileSave} 
+            isTwitterVerified={user.isTwitterVerified}
+            onUpdate={handleProfileUpdate}
+            onSave={handleProfileSave}
+            onLogout={handleLogout}
           />
         ) : view === 'landing' ? (
           <>
