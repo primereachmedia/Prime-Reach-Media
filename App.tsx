@@ -12,6 +12,7 @@ interface UserState {
   email: string | null;
   role: 'signin' | 'creator' | 'marketer' | null;
   hasProfile: boolean;
+  walletAddress: string | null;
 }
 
 const App: React.FC = () => {
@@ -20,7 +21,8 @@ const App: React.FC = () => {
     isLoggedIn: false,
     email: null,
     role: null,
-    hasProfile: false
+    hasProfile: false,
+    walletAddress: null
   });
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
     isOpen: false,
@@ -36,20 +38,21 @@ const App: React.FC = () => {
   };
 
   const handleLoginSuccess = (email: string, role: string) => {
-    setUser({
+    setUser(prev => ({
+      ...prev,
       isLoggedIn: true,
       email,
       role: role as any,
       hasProfile: false
-    });
+    }));
     setAuthModal(prev => ({ ...prev, isOpen: false }));
-    setView('profile'); // Direct them to build profile immediately
+    setView('profile');
   };
 
   const handleProfileSave = (data: any) => {
     console.log('Profile Saved:', data);
     setUser(prev => ({ ...prev, hasProfile: true }));
-    setView('marketplace'); // After profile, go to marketplace
+    setView('marketplace');
   };
 
   return (
@@ -64,7 +67,11 @@ const App: React.FC = () => {
       
       <main className="flex-grow">
         {view === 'profile' ? (
-          <ProfileBuilder userRole={user.role || 'marketer'} onSave={handleProfileSave} />
+          <ProfileBuilder 
+            userRole={user.role || 'marketer'} 
+            userEmail={user.email || ''}
+            onSave={handleProfileSave} 
+          />
         ) : view === 'landing' ? (
           <>
             <Hero onEnterMarketplace={navigateToMarketplace} />

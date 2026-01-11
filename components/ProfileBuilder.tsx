@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 
 interface ProfileBuilderProps {
   userRole: string;
+  userEmail: string;
   onSave: (data: any) => void;
 }
 
-const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => {
+const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, onSave }) => {
   const [formData, setFormData] = useState({
     companyName: '',
     mission: '',
@@ -15,8 +16,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
     industry: '',
     primaryObjective: '',
     audienceDescription: '',
-    image: null as string | null
+    image: null as string | null,
+    walletAddress: null as string | null
   });
+
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,9 +33,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
     }
   };
 
+  const handleConnectWallet = () => {
+    setIsConnecting(true);
+    // Simulate Phantom connection
+    setTimeout(() => {
+      setFormData(prev => ({ ...prev, walletAddress: '7pRm...3xM9' }));
+      setIsConnecting(false);
+    }, 1500);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, email: userEmail });
   };
 
   const companyTypes = ['Individual', 'Startup', 'Agency', 'Enterprise'];
@@ -49,14 +62,14 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
 
         <form onSubmit={handleSubmit} className="space-y-12 pb-24">
           
-          {/* IMAGE BRANDING SECTION */}
+          {/* IMAGE BRANDING SECTION - 1024x1024 UI */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">01</span>
-              Branding Assets
+              Stream Branding Asset
             </h2>
             
-            <div className="relative group">
+            <div className="relative flex justify-center">
               <input 
                 type="file" 
                 id="branding-asset" 
@@ -66,22 +79,22 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
               />
               <label 
                 htmlFor="branding-asset"
-                className="block w-full aspect-[21/9] rounded-3xl border-4 border-dashed border-slate-200 dark:border-slate-800 hover:border-jetblue dark:hover:border-jetblue transition-all cursor-pointer overflow-hidden relative group"
+                className="block w-full max-w-[400px] aspect-square rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-slate-800 hover:border-jetblue dark:hover:border-jetblue transition-all cursor-pointer overflow-hidden relative group bg-slate-50 dark:bg-slate-950"
               >
                 {formData.image ? (
                   <div className="relative w-full h-full">
                     <img src={formData.image} className="w-full h-full object-cover" alt="Branding" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white font-black text-xs uppercase tracking-widest">Update Asset</span>
+                      <span className="text-white font-black text-xs uppercase tracking-widest">Swap 1024x1024 Asset</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 group-hover:text-jetblue">
-                    <svg className="w-12 h-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 group-hover:text-jetblue p-8 text-center">
+                    <svg className="w-16 h-16 mb-6 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-xs font-black uppercase tracking-[0.2em]">Upload Stream Branding Asset</span>
-                    <p className="text-[10px] font-bold mt-2 opacity-60 italic">Recommended: 1920x820 PNG/SVG</p>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] leading-relaxed">Click to Upload Master Asset</span>
+                    <p className="text-[10px] font-bold mt-4 opacity-60 italic uppercase tracking-tighter">Square Format (1024x1024) Required for Platform Branding</p>
                   </div>
                 )}
               </label>
@@ -92,10 +105,24 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">02</span>
-              Identity Verification
+              Identity & Connectivity
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  Registered Email 
+                  <svg className="w-3 h-3 text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </label>
+                <input 
+                  type="email" 
+                  value={userEmail}
+                  disabled
+                  className="w-full bg-slate-100 dark:bg-slate-950/50 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold text-slate-400 cursor-not-allowed opacity-70"
+                />
+              </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Entity Name</label>
                 <input 
@@ -103,18 +130,52 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
                   value={formData.companyName}
                   onChange={(e) => setFormData(prev => ({...prev, companyName: e.target.value}))}
                   placeholder="EX: PRIME REACH MEDIA"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner"
                 />
               </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Mission Statement</label>
-                <input 
-                  type="text" 
-                  value={formData.mission}
-                  onChange={(e) => setFormData(prev => ({...prev, mission: e.target.value}))}
-                  placeholder="ONE SENTENCE IMPACT"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all"
-                />
+            </div>
+
+            <div className="mb-10">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Mission Statement</label>
+              <input 
+                type="text" 
+                value={formData.mission}
+                onChange={(e) => setFormData(prev => ({...prev, mission: e.target.value}))}
+                placeholder="DEFINE YOUR CORE PURPOSE IN ONE SENTENCE"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner"
+              />
+            </div>
+
+            {/* Wallet Integration */}
+            <div className="p-6 bg-slate-50 dark:bg-slate-950/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 mb-10">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h4 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                    <img src="https://cryptologos.cc/logos/solana-sol-logo.png" className="w-4 h-4" />
+                    Phantom Wallet Connectivity
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight">Required for automated monetization & transactions</p>
+                </div>
+                {formData.walletAddress ? (
+                  <div className="px-6 py-3 bg-green-500/10 border border-green-500/20 text-green-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    Connected: {formData.walletAddress}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConnectWallet}
+                    disabled={isConnecting}
+                    className="px-8 py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg flex items-center gap-2"
+                  >
+                    {isConnecting ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <img src="https://res.cloudinary.com/dc6u9s76p/image/upload/v1645001309/phantom-logo_d6lqjy.png" className="w-4 h-4" />
+                    )}
+                    {isConnecting ? 'Linking...' : 'Connect Phantom'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -200,18 +261,21 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, onSave }) => 
                   value={formData.audienceDescription}
                   onChange={(e) => setFormData(prev => ({...prev, audienceDescription: e.target.value}))}
                   placeholder="DESCRIBE THE DEMOGRAPHICS, PSYCHOGRAPHICS, AND NICHE SEGMENTS YOU ARE TARGETING..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none shadow-inner"
                 />
               </div>
             </div>
           </section>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-6 items-center">
+            <p className="text-[9px] font-bold text-slate-400 uppercase text-right max-w-[200px] leading-tight">
+              By finalizing, you verify all entity details and agree to the PRM precision marketplace protocols.
+            </p>
             <button 
               type="submit"
-              className="px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95"
+              className="px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95 border-b-4 border-jetblue-dark"
             >
-              Finalize & Save Profile
+              Lock & Deploy Profile
             </button>
           </div>
 
