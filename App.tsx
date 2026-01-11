@@ -7,6 +7,7 @@ import Marketplace from './components/Marketplace.tsx';
 import AuthModal from './components/AuthModal.tsx';
 import ProfileBuilder from './components/ProfileBuilder.tsx';
 import CreatorHub from './components/CreatorHub.tsx';
+import HowItWorks from './components/HowItWorks.tsx';
 
 interface Placement {
   id: string;
@@ -81,7 +82,7 @@ const INITIAL_PLACEMENTS: Placement[] = [
 ];
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub'>('landing');
+  const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub' | 'how_it_works'>('landing');
   const [user, setUser] = useState<UserState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
@@ -232,9 +233,11 @@ const App: React.FC = () => {
             isLoggedIn={user.isLoggedIn}
             onAuthRequired={() => setAuthModal({ isOpen: true, mode: 'signin' })}
           />
+        ) : view === 'how_it_works' ? (
+          <HowItWorks onBack={() => setView('landing')} onGetStarted={() => setAuthModal({ isOpen: true, mode: 'signup' })} />
         ) : (
           <>
-            <Hero onEnterMarketplace={() => setView('marketplace')} />
+            <Hero onEnterMarketplace={() => setView('marketplace')} onSeeHowItWorks={() => setView('how_it_works')} />
             <ValueProp />
           </>
         )}

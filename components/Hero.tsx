@@ -3,9 +3,10 @@ import React from 'react';
 
 interface HeroProps {
   onEnterMarketplace: () => void;
+  onSeeHowItWorks: () => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onEnterMarketplace }) => {
+const Hero: React.FC<HeroProps> = ({ onEnterMarketplace, onSeeHowItWorks }) => {
   return (
     <section className="relative overflow-hidden bg-white dark:bg-slate-950 pt-20 pb-24 md:pt-32 md:pb-40 transition-colors">
       {/* Background decoration */}
@@ -35,7 +36,10 @@ const Hero: React.FC<HeroProps> = ({ onEnterMarketplace }) => {
           >
             Enter Marketplace
           </button>
-          <button className="w-full sm:w-auto bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 px-10 py-5 rounded-2xl font-bold text-xl hover:border-prmgold/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+          <button 
+            onClick={onSeeHowItWorks}
+            className="w-full sm:w-auto bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 px-10 py-5 rounded-2xl font-bold text-xl hover:border-prmgold/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+          >
             See How It Works
           </button>
         </div>
