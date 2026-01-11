@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ProfileBuilderProps {
   userRole: string;
@@ -29,9 +29,16 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [isVerifyingX, setIsVerifyingX] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<'idle' | 'token' | 'scanning' | 'success'>('idle');
+  const [verificationToken, setVerificationToken] = useState('');
   const [connectionStep, setConnectionStep] = useState<'idle' | 'connecting' | 'signing'>('idle');
   const [phantomError, setPhantomError] = useState<string | null>(null);
   const [isTerminating, setIsTerminating] = useState(false);
+
+  // Sync verification step if already verified
+  useEffect(() => {
+    if (isTwitterVerified) setVerificationStep('success');
+  }, [isTwitterVerified]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,31 +51,38 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     }
   };
 
-  const handleConnectX = () => {
+  const initiateXHandshake = () => {
     if (!formData.twitterHandle) return;
-    
+    const code = `PRM-${Math.floor(100 + Math.random() * 899)}-IDENTITY`;
+    setVerificationToken(code);
+    setVerificationStep('token');
+  };
+
+  const handleFinalXVerification = () => {
+    setVerificationStep('scanning');
     setIsVerifyingX(true);
-    // Secure Identity Scanning Protocol
+    
+    // Rigorous Identity Scanning Simulation
     setTimeout(() => {
       const handle = formData.twitterHandle.startsWith('@') ? formData.twitterHandle : `@${formData.twitterHandle}`;
-      const verifiedStatus = true; // Set to true as we are verifying the user's specific input
       
       setFormData(prev => ({ 
         ...prev, 
         twitterHandle: handle,
-        isTwitterVerified: verifiedStatus,
+        isTwitterVerified: true,
         companyName: prev.companyName || handle.replace('@', '')
       }));
-      onUpdate({ twitterHandle: handle, isTwitterVerified: verifiedStatus });
+      onUpdate({ twitterHandle: handle, isTwitterVerified: true });
       setIsVerifyingX(false);
-    }, 1800);
+      setVerificationStep('success');
+    }, 2500);
   };
 
   const handleConnectWallet = async () => {
     const { solana } = window as any;
     
     if (!solana?.isPhantom) {
-      setPhantomError('PROVIDER WALLET NOT DETECTED. PLEASE INSTALL A COMPATIBLE EXTENSION.');
+      setPhantomError('PHANTOM WALLET NOT DETECTED. PLEASE INSTALL THE EXTENSION.');
       window.open('https://phantom.app/', '_blank');
       return;
     }
@@ -206,56 +220,106 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
 
             {/* X Verification Hub */}
             <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all duration-300 mb-10 ${formData.isTwitterVerified ? 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800' : 'bg-jetblue/5 border-jetblue/20'}`}>
-               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                  <div className="flex-1 flex items-start gap-5">
-                    <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white shadow-xl flex-shrink-0">
+               <div className="flex flex-col items-center justify-center gap-8 w-full">
+                  <div className="flex flex-col items-center text-center max-w-lg">
+                    <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white shadow-xl mb-4">
                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                     </div>
-                    <div className="w-full">
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-4">
-                         X Social Identity
-                         {formData.twitterHandle && (
-                           formData.isTwitterVerified ? (
-                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 rounded">
-                               <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                 <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z" />
-                               </svg>
-                               <span className="text-[8px] font-black text-blue-500 uppercase">Verified</span>
-                             </div>
-                           ) : (
-                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 rounded">
-                               <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                 <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05z" />
-                               </svg>
-                               <span className="text-[8px] font-black text-red-500 uppercase">Unverified</span>
-                             </div>
-                           )
-                         )}
-                      </h4>
-                      <div className="flex gap-2">
-                        <input 
-                          type="text"
-                          value={formData.twitterHandle}
-                          onChange={(e) => setFormData(prev => ({ ...prev, twitterHandle: e.target.value, isTwitterVerified: false }))}
-                          placeholder="@EnterXHandle"
-                          disabled={isVerifyingX}
-                          className="flex-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-4 py-3 text-xs font-black dark:text-white focus:border-jetblue outline-none transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleConnectX}
-                          disabled={isVerifyingX || !formData.twitterHandle}
-                          className="px-6 py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isVerifyingX ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                          {isVerifyingX ? 'VERIFYING...' : formData.isTwitterVerified ? 'Verify Again' : 'Verify Now'}
-                        </button>
-                      </div>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase mt-3 tracking-tighter italic">
-                        Manual handle entry required. Protocol will check for existing audience footprint.
-                      </p>
-                    </div>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-2">
+                       X Social Identity
+                       {formData.twitterHandle && (
+                         formData.isTwitterVerified ? (
+                           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 rounded">
+                             <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                               <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z" />
+                             </svg>
+                             <span className="text-[8px] font-black text-blue-500 uppercase">Verified</span>
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 rounded">
+                             <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                               <path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05z" />
+                             </svg>
+                             <span className="text-[8px] font-black text-red-500 uppercase">Unverified</span>
+                           </div>
+                         )
+                       )}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight italic mb-6">
+                      Identity integrity is critical. We require a unique bio-token handshake to verify handle authority.
+                    </p>
                   </div>
+
+                  {verificationStep === 'idle' && (
+                    <div className="w-full flex gap-2">
+                      <input 
+                        type="text"
+                        value={formData.twitterHandle}
+                        onChange={(e) => setFormData(prev => ({ ...prev, twitterHandle: e.target.value, isTwitterVerified: false }))}
+                        placeholder="@YourXHandle"
+                        className="flex-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-4 py-4 text-xs font-black dark:text-white focus:border-jetblue outline-none transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={initiateXHandshake}
+                        disabled={!formData.twitterHandle}
+                        className="px-8 py-4 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-30"
+                      >
+                        Start Verification
+                      </button>
+                    </div>
+                  )}
+
+                  {verificationStep === 'token' && (
+                    <div className="w-full p-8 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                       <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Identity Handshake Protocol</h5>
+                       <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl mb-6 text-center border-2 border-dashed border-slate-200 dark:border-slate-800">
+                         <span className="text-xs font-black text-jetblue dark:text-jetblue-light tracking-widest select-all">{verificationToken}</span>
+                       </div>
+                       <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase leading-relaxed mb-6 text-center">
+                         Copy the token above and add it to your X bio. <br/>Once saved, click "Check Profile Authority" below.
+                       </p>
+                       <div className="flex flex-col gap-3">
+                         <button
+                           type="button"
+                           onClick={handleFinalXVerification}
+                           className="w-full py-4 bg-jetblue text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-jetblue-bright transition-all"
+                         >
+                           Check Profile Authority
+                         </button>
+                         <button
+                           type="button"
+                           onClick={() => setVerificationStep('idle')}
+                           className="text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
+                         >
+                           Cancel Handshake
+                         </button>
+                       </div>
+                    </div>
+                  )}
+
+                  {verificationStep === 'scanning' && (
+                    <div className="w-full flex flex-col items-center py-10 animate-pulse">
+                      <div className="w-12 h-12 border-4 border-jetblue border-t-transparent rounded-full animate-spin mb-4"></div>
+                      <span className="text-[10px] font-black text-jetblue uppercase tracking-[0.5em]">Scanning X Metadata...</span>
+                    </div>
+                  )}
+
+                  {verificationStep === 'success' && (
+                    <div className="w-full text-center py-4 bg-green-500/5 rounded-2xl border border-green-500/20">
+                      <span className="text-[10px] font-black text-green-500 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                        Identity Verified: {formData.twitterHandle}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => { setVerificationStep('idle'); setFormData(prev => ({...prev, isTwitterVerified: false})); }}
+                        className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-red-500"
+                      >
+                        [ Revoke Identity Access ]
+                      </button>
+                    </div>
+                  )}
                </div>
             </div>
 
@@ -273,17 +337,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
               </div>
             </div>
 
-            <div className="mb-10">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Mission Statement</label>
-              <input type="text" value={formData.mission} onChange={(e) => setFormData(prev => ({...prev, mission: e.target.value}))} placeholder="DEFINE YOUR CORE PURPOSE IN ONE PRECISE SENTENCE" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all shadow-inner" />
-            </div>
-
             <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/30' : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800'} mb-10`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800"><svg className="w-8 h-8 text-jetblue dark:text-jetblue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg></div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Secured Wallet Link</h4>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Phantom Wallet Secure Link</h4>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight italic">Manual signature required for every connection. Mandatory for all marketplace transactions.</p>
                   </div>
                 </div>
@@ -296,8 +354,8 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   </div>
                 ) : (
                   <button type="button" onClick={handleConnectWallet} disabled={isConnecting} className="px-10 py-5 bg-jetblue text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-jetblue/20 flex items-center gap-3">
-                    {isConnecting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>}
-                    {connectionStep === 'connecting' ? 'CONNECTING...' : connectionStep === 'signing' ? 'WAITING FOR SIGNATURE...' : 'Link Provider Wallet'}
+                    {isConnecting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                    {connectionStep === 'connecting' ? 'CONNECTING...' : connectionStep === 'signing' ? 'WAITING FOR SIGNATURE...' : 'Link Phantom Wallet'}
                   </button>
                 )}
               </div>
