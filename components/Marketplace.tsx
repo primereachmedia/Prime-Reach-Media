@@ -19,6 +19,11 @@ interface CardProps {
   totalBuys: number;
 }
 
+interface MarketplaceProps {
+  isLoggedIn?: boolean;
+  onAuthRequired?: () => void;
+}
+
 const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, onClick }) => (
   <div 
     className="group flex flex-col items-center cursor-pointer"
@@ -61,7 +66,7 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
   </div>
 );
 
-const Marketplace: React.FC = () => {
+const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPlacement, setSelectedPlacement] = useState<CardProps | null>(null);
   const [status, setStatus] = useState<'active' | 'ended'>('active');
@@ -191,6 +196,10 @@ const Marketplace: React.FC = () => {
   };
 
   const handleBuy = () => {
+    if (!isLoggedIn) {
+      onAuthRequired?.();
+      return;
+    }
     setIsPurchasing(true);
     // Simulate real USDC settlement
     setTimeout(() => {
@@ -208,16 +217,13 @@ const Marketplace: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6">
         
         <div className="text-center mb-24">
-           <div className="flex items-center justify-center gap-6 mb-4">
+           <div className="flex items-center justify-center gap-6 mb-8">
               <div className="h-[2px] w-12 bg-jetblue dark:bg-prmgold opacity-30"></div>
-              <h1 className="text-6xl md:text-8xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
-                PRM CORE
+              <h1 className="text-6xl md:text-8xl font-black text-jetblue dark:text-jetblue-light tracking-tighter uppercase leading-none italic">
+                MARKETPLACE
               </h1>
               <div className="h-[2px] w-12 bg-jetblue dark:bg-prmgold opacity-30"></div>
            </div>
-          <h2 className="text-6xl md:text-8xl font-black text-jetblue dark:text-jetblue-light tracking-tighter uppercase leading-none mb-8 italic">
-            MARKETPLACE
-          </h2>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Precision Scalable Monetization Layer</p>
         </div>
 
@@ -355,7 +361,7 @@ const Marketplace: React.FC = () => {
         </div>
       </div>
 
-      {/* FILTER DRAWER (RESTORED) */}
+      {/* FILTER DRAWER */}
       <div className={`fixed inset-0 z-[60] transition-opacity duration-500 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFilterOpen(false)} />
         <div className={`absolute top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
