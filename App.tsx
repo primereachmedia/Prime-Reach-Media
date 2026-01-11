@@ -5,9 +5,23 @@ import Hero from './components/Hero.tsx';
 import ValueProp from './components/ValueProp.tsx';
 import Marketplace from './components/Marketplace.tsx';
 import AuthModal from './components/AuthModal.tsx';
+import ProfileBuilder from './components/ProfileBuilder.tsx';
+
+interface UserState {
+  isLoggedIn: boolean;
+  email: string | null;
+  role: 'signin' | 'creator' | 'marketer' | null;
+  hasProfile: boolean;
+}
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'marketplace'>('landing');
+  const [view, setView] = useState<'landing' | 'marketplace' | 'profile'>('landing');
+  const [user, setUser] = useState<UserState>({
+    isLoggedIn: false,
+    email: null,
+    role: null,
+    hasProfile: false
+  });
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
     isOpen: false,
     mode: 'signin',
@@ -15,9 +29,27 @@ const App: React.FC = () => {
 
   const navigateToMarketplace = () => setView('marketplace');
   const navigateToHome = () => setView('landing');
+  const navigateToProfile = () => setView('profile');
 
   const openAuth = (mode: 'signin' | 'signup') => {
     setAuthModal({ isOpen: true, mode });
+  };
+
+  const handleLoginSuccess = (email: string, role: string) => {
+    setUser({
+      isLoggedIn: true,
+      email,
+      role: role as any,
+      hasProfile: false
+    });
+    setAuthModal(prev => ({ ...prev, isOpen: false }));
+    setView('profile'); // Direct them to build profile immediately
+  };
+
+  const handleProfileSave = (data: any) => {
+    console.log('Profile Saved:', data);
+    setUser(prev => ({ ...prev, hasProfile: true }));
+    setView('marketplace'); // After profile, go to marketplace
   };
 
   return (
@@ -25,10 +57,15 @@ const App: React.FC = () => {
       <Navbar 
         onLogoClick={navigateToHome} 
         onAuthClick={openAuth}
+        isLoggedIn={user.isLoggedIn}
+        userRole={user.role}
+        onProfileClick={navigateToProfile}
       />
       
       <main className="flex-grow">
-        {view === 'landing' ? (
+        {view === 'profile' ? (
+          <ProfileBuilder userRole={user.role || 'marketer'} onSave={handleProfileSave} />
+        ) : view === 'landing' ? (
           <>
             <Hero onEnterMarketplace={navigateToMarketplace} />
             <ValueProp />
@@ -53,6 +90,7 @@ const App: React.FC = () => {
         isOpen={authModal.isOpen} 
         initialMode={authModal.mode}
         onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))} 
+        onLoginSuccess={handleLoginSuccess}
       />
     </div>
   );

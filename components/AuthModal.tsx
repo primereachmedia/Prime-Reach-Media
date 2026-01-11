@@ -6,12 +6,13 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode: 'signin' | 'signup';
+  onLoginSuccess?: (email: string, role: string) => void;
 }
 
 type AuthStep = 'initial' | 'verify_otp' | 'success';
 type UserPath = 'signin' | 'creator' | 'marketer' | null;
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
   const [step, setStep] = useState<AuthStep>('initial');
   const [path, setPath] = useState<UserPath>(null);
   const [email, setEmail] = useState('');
@@ -44,11 +45,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError(null);
     setPath(selectedPath);
     
-    // We trigger the REAL email transmission here
-    const result = await sendVerificationEmail(email, selectedPath || 'unknown');
+    const result = await sendVerificationEmail(email, selectedPath || 'signin');
     
     if (result.success) {
-      // Store the code locally to verify it in the next step
       setSentCode(result.passcode || null);
       setTimeout(() => {
         setIsLoading(false);
@@ -66,12 +65,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
-    // Focus next box
     if (value && index < 5) {
       otpInputs.current[index + 1]?.focus();
     }
 
-    // Auto-verify if 6th digit is entered
     if (index === 5 && value) {
       const fullCode = newOtp.join('');
       verifyCode(fullCode);
@@ -88,13 +85,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     setError(null);
 
-    // Simulated network delay for the "Security Check"
     setTimeout(() => {
-      // STRICT VERIFICATION: Matches the EXACT code sent in your email
       if (sentCode && code === sentCode) {
         setStep('success');
       } else {
-        // FAIL STATE
         setError('SECURE CODE MISMATCH');
         setIsShaking(true);
         setOtp(['', '', '', '', '', '']);
@@ -115,7 +109,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         }
         .shake-element { animation: shake 0.2s ease-in-out 0s 2; }
       `}</style>
-
       <div className="relative mb-10">
         <div className="absolute inset-0 bg-jetblue/20 rounded-full blur-3xl animate-pulse"></div>
         <div className="relative w-24 h-24 bg-jetblue rounded-[2rem] flex items-center justify-center shadow-2xl shadow-jetblue/40 rotate-6 border-4 border-white dark:border-slate-900">
@@ -124,15 +117,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </svg>
         </div>
       </div>
-      
       <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic mb-2 tracking-tighter">AUTHENTICATION REQUIRED</h3>
       <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase max-w-sm leading-relaxed mb-10">
         Input the 6-digit security token dispatched to:<br/>
         <span className="text-jetblue font-black mt-1 block select-all">{email}</span>
       </p>
-
       {error && <div className="mb-6 p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-lg animate-bounce border border-red-500/20">{error}</div>}
-
       <div className={`flex gap-3 mb-12 ${isShaking ? 'shake-element' : ''}`}>
         {otp.map((digit, idx) => (
           <input
@@ -151,7 +141,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           />
         ))}
       </div>
-
       <div className="flex flex-col gap-4 w-full max-w-xs">
         {isLoading ? (
           <div className="flex items-center justify-center gap-3 py-4 text-jetblue font-black text-[10px] uppercase tracking-[0.4em]">
@@ -194,10 +183,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         Verification successful. Your session is now encrypted and secured by <span className="text-jetblue font-black">PRM HUB V2</span>.
       </p>
       <button 
-        onClick={onClose}
+        onClick={() => onLoginSuccess?.(email, path || 'marketer')}
         className="px-12 py-5 bg-[#001A41] text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue transition-all shadow-2xl hover:-translate-y-1"
       >
-        Initialize Dashboard
+        Initialize Profile
       </button>
     </div>
   );
@@ -205,12 +194,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose} />
-      
       <div className="relative w-full max-w-7xl bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-white/10">
-        
         {step === 'success' ? renderSuccess() : step === 'verify_otp' ? renderVerifyOtp() : (
           <div className="flex flex-col lg:flex-row min-h-[700px]">
-            
             {/* SIGN IN */}
             <div className="flex-1 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
               <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden mb-10 border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 shadow-inner">
@@ -220,7 +206,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest mb-4">EXISTING USERS</div>
                 <h3 className="text-5xl font-black text-slate-900 dark:text-white uppercase italic leading-[0.8] tracking-tighter">SIGN <br /> IN</h3>
               </div>
-
               <form onSubmit={(e) => handleInitialSubmit(e, 'signin')} className="mt-auto space-y-4">
                 {error && path === 'signin' && <div className="p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight border border-red-500/20">{error}</div>}
                 <input 
@@ -234,7 +219,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </button>
               </form>
             </div>
-
             {/* CREATOR */}
             <div className="flex-1 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col bg-prmgold text-white group transition-all hover:bg-prmgold-dark">
               <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden mb-10 border border-white/10 bg-white/5 shadow-2xl">
@@ -244,7 +228,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/80 uppercase tracking-widest mb-4">NEW CREATORS</div>
                 <h3 className="text-5xl font-black uppercase italic leading-[0.8] tracking-tighter">CREATOR <br /> SIGN UP</h3>
               </div>
-
               <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
                 {error && path === 'creator' && <div className="p-3 bg-black/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
                 <input 
@@ -258,7 +241,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </button>
               </form>
             </div>
-
             {/* MARKETER */}
             <div className="flex-1 p-8 md:p-12 flex flex-col bg-[#001A41] text-white group transition-all hover:bg-[#00255c]">
               <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden mb-10 border border-white/10 bg-white/5 shadow-2xl">
@@ -268,7 +250,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/70 uppercase tracking-widest mb-4">ENTERPRISE TEAMS</div>
                 <h3 className="text-5xl font-black uppercase italic leading-[0.8] tracking-tighter">MARKETER <br /> SIGN UP</h3>
               </div>
-
               <form onSubmit={(e) => handleInitialSubmit(e, 'marketer')} className="mt-auto space-y-4">
                 {error && path === 'marketer' && <div className="p-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
                 <input 
@@ -284,7 +265,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
         )}
-
         <button 
           onClick={onClose}
           className="absolute top-8 right-8 z-[110] w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all border border-slate-200 dark:border-white/10"

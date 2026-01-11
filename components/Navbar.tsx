@@ -4,9 +4,12 @@ import React, { useState, useEffect } from 'react';
 interface NavbarProps {
   onLogoClick: () => void;
   onAuthClick: (mode: 'signin' | 'signup') => void;
+  isLoggedIn?: boolean;
+  userRole?: string | null;
+  onProfileClick?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -60,15 +63,26 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick }) => {
           </a>
 
           <button className="hidden md:block bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 opacity-60 cursor-not-allowed">
-            Documentation
+            Docs
           </button>
 
-          <button 
-            onClick={() => onAuthClick('signin')}
-            className="bg-jetblue text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-lg shadow-jetblue/20 border border-jetblue/10"
-          >
-            Account Access
-          </button>
+          {isLoggedIn ? (
+            <button 
+              onClick={onProfileClick}
+              className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg"
+            >
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              My Profile
+              <span className="text-[9px] bg-jetblue text-white px-1.5 py-0.5 rounded ml-1 opacity-70">{userRole}</span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => onAuthClick('signin')}
+              className="bg-jetblue text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-lg shadow-jetblue/20 border border-jetblue/10"
+            >
+              Account Access
+            </button>
+          )}
         </div>
       </div>
     </nav>
