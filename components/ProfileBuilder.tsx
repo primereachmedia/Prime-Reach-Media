@@ -26,10 +26,12 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     walletAddress: initialWalletAddress || null as string | null,
     twitterHandle: initialTwitterHandle || '',
     isTwitterVerified: isTwitterVerified,
+    isWalletSigned: !!initialWalletAddress,
     selectedPlatforms: [] as string[]
   });
 
   const [isTerminating, setIsTerminating] = useState(false);
+  const [isSigningWallet, setIsSigningWallet] = useState(false);
   const isCreator = userRole === 'creator';
 
   const generateRandomString = (length: number) => {
@@ -63,19 +65,38 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       window.open('https://phantom.app/', '_blank');
       return;
     }
+    
+    setIsSigningWallet(true);
     try {
-      const response = await solana.connect();
-      setFormData(prev => ({ ...prev, walletAddress: response.publicKey.toString() }));
-    } catch (err) { console.error(err); }
+      // Step 1: Connect
+      const resp = await solana.connect();
+      const publicKey = resp.publicKey.toString();
+      
+      // Step 2: Mandatory Sign-In Message
+      const message = `Prime Reach Media - Secure Wallet Sign-In\n\nTimestamp: ${new Date().toISOString()}\nWallet: ${publicKey}\n\nBy signing this message, you are authorizing this session for automated USDC settlement protocols.`;
+      const encodedMessage = new TextEncoder().encode(message);
+      
+      const signedMessage = await solana.signMessage(encodedMessage, "utf8");
+      
+      if (signedMessage) {
+        setFormData(prev => ({ 
+          ...prev, 
+          walletAddress: publicKey,
+          isWalletSigned: true 
+        }));
+      }
+    } catch (err) { 
+      console.error('Wallet Authentication Failed:', err);
+      alert('Authentication failed. You must sign the message in your wallet to proceed.');
+    } finally {
+      setIsSigningWallet(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // X is now optional, so no alert here.
-    
-    if (isCreator && !formData.walletAddress) {
-      alert("Creators must link a Phantom wallet for automated USDC settlement.");
+    if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
+      alert("Creators must sign in with a Phantom wallet for automated USDC settlement.");
       return;
     }
     onSave(formData);
@@ -253,14 +274,23 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                 <div className="flex items-center gap-6">
-                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl shadow-jetblue/20 transition-all ${formData.walletAddress ? 'bg-jetblue text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
-                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl transition-all ${formData.walletAddress ? 'bg-jetblue text-white shadow-jetblue/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                      {isSigningWallet ? (
+                        <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                      )}
                    </div>
                    <div className="text-left">
                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Settlement Layer {!isCreator && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
-                      <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
-                        {isCreator ? (formData.walletAddress ? 'WALLET LINKED FOR SETTLEMENT' : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                         <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
+                           {isCreator ? (formData.walletAddress ? 'WALLET SIGNED & VERIFIED' : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
+                         </p>
+                         {formData.isWalletSigned && (
+                           <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">SECURE HANDSHAKE</span>
+                         )}
+                      </div>
                    </div>
                 </div>
                 {formData.walletAddress ? (
@@ -268,10 +298,17 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                     <span className="px-6 py-3 bg-white dark:bg-slate-950 border-2 border-green-500/20 text-green-600 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm">
                       {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </span>
-                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect Wallet</button>
+                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null, isWalletSigned: false }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect Wallet</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={handleConnectWallet} className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20">Link Phantom</button>
+                  <button 
+                    type="button" 
+                    disabled={isSigningWallet}
+                    onClick={handleConnectWallet} 
+                    className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20 disabled:opacity-50"
+                  >
+                    {isSigningWallet ? 'Check Wallet...' : 'Sign in with Phantom'}
+                  </button>
                 )}
               </div>
             </div>
