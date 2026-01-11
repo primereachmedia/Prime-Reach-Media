@@ -26,7 +26,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     walletAddress: initialWalletAddress || null as string | null,
     twitterHandle: initialTwitterHandle || '',
     isTwitterVerified: isTwitterVerified,
-    isWalletSigned: !!initialWalletAddress,
+    isWalletSigned: false, // Force re-sign every time for session security
     selectedPlatforms: [] as string[]
   });
 
@@ -68,18 +68,19 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     
     setIsSigningWallet(true);
     try {
-      // Step 1: Connect
+      // Step 1: Request connection
       const resp = await solana.connect();
       const publicKey = resp.publicKey.toString();
       
-      // Step 2: Mandatory Sign-In Message
-      const message = `Prime Reach Media - Secure Wallet Sign-In\n\nTimestamp: ${new Date().toISOString()}\nWallet: ${publicKey}\n\nBy signing this message, you are authorizing this session for automated USDC settlement protocols.`;
+      // Step 2: Sign custom authentication message
+      const message = `Prime Reach Media (PRM)\n\nSECURE SIGN-IN SESSION\nTimestamp: ${new Date().toISOString()}\nWallet: ${publicKey}\n\nI authorize this wallet for automated USDC settlement protocols on the PRM network.`;
       const encodedMessage = new TextEncoder().encode(message);
       
-      const response = await solana.signMessage(encodedMessage, "utf8");
+      // Standard signMessage call
+      const signatureResponse = await solana.signMessage(encodedMessage, "utf8");
       
-      // Check for success: some wallets return an object with signature/publicKey, others return it directly
-      if (response) {
+      // If we reach here, user signed. Check for presence of signature or result
+      if (signatureResponse) {
         setFormData(prev => ({ 
           ...prev, 
           walletAddress: publicKey,
@@ -88,7 +89,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       }
     } catch (err: any) { 
       console.error('Wallet Authentication Failed:', err);
-      // Only alert if it's not a user rejection (Phantom error code 4001)
+      // Only alert if it's NOT a standard user rejection (4001)
       if (err?.code !== 4001) {
         alert('Authentication failed. Please ensure your wallet is unlocked and try again.');
       }
@@ -100,7 +101,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
-      alert("Creators must sign in with a Phantom wallet for automated USDC settlement.");
+      alert("Verification Required: Creators must sign the authentication message with a Phantom wallet to proceed.");
       return;
     }
     onSave(formData);
@@ -144,7 +145,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-12">
-          {/* Section 1: Basic Identity */}
+          {/* Section 1: Visual Identity */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">01</span>
@@ -187,7 +188,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             </div>
           </section>
 
-          {/* Section 2: Role-Specific Strategy */}
+          {/* Section 2: Strategy */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">02</span>
@@ -242,15 +243,15 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             )}
           </section>
 
-          {/* Section 3: Security & Settlement Protocols */}
+          {/* Section 3: Security & Settlement */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors space-y-12">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">03</span>
-              Security Protocol
+              SECURITY PROTOCOL
             </h2>
 
             {/* X IDENTITY */}
-            <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/20' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
+            <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                   <div className="flex items-center gap-6">
                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl transition-all ${formData.isTwitterVerified ? 'bg-black text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
@@ -289,7 +290,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Settlement Layer {!isCreator && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
                       <div className="flex items-center gap-2">
                          <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
-                           {isCreator ? (formData.walletAddress ? 'WALLET SIGNED & VERIFIED' : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
+                           {isCreator ? (formData.walletAddress ? (formData.isWalletSigned ? 'WALLET SIGNED & VERIFIED' : 'SIGNATURE REQUIRED') : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
                          </p>
                          {formData.isWalletSigned && (
                            <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">SECURE HANDSHAKE</span>
@@ -297,7 +298,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       </div>
                    </div>
                 </div>
-                {formData.walletAddress ? (
+                {formData.walletAddress && formData.isWalletSigned ? (
                   <div className="flex flex-col items-end gap-2">
                     <span className="px-6 py-3 bg-white dark:bg-slate-950 border-2 border-green-500/20 text-green-600 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm">
                       {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
