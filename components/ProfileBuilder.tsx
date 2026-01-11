@@ -71,10 +71,9 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.isTwitterVerified) {
-      alert("X Identity verification is mandatory for all users.");
-      return;
-    }
+    
+    // X is now optional, so no alert here.
+    
     if (isCreator && !formData.walletAddress) {
       alert("Creators must link a Phantom wallet for automated USDC settlement.");
       return;
@@ -229,13 +228,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/20' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                   <div className="flex items-center gap-6">
-                     <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center shadow-xl">
+                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl transition-all ${formData.isTwitterVerified ? 'bg-black text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                      </div>
                      <div className="text-left">
                         <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">X Authority Anchor</h4>
-                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] italic leading-tight">
-                          {formData.isTwitterVerified ? 'IDENTITY ANCHORED VIA OAUTH' : 'REQUIREMENT: SECURE OAUTH HANDSHAKE'}
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.isTwitterVerified ? 'text-blue-500' : 'text-slate-400'}`}>
+                          {formData.isTwitterVerified ? 'IDENTITY ANCHORED VIA OAUTH' : 'USER HAS NOT AUTHORIZED X'}
                         </p>
                      </div>
                   </div>
@@ -254,13 +253,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 bg-jetblue text-white rounded-2xl flex items-center justify-center shadow-xl shadow-jetblue/20 transition-all">
+                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl shadow-jetblue/20 transition-all ${formData.walletAddress ? 'bg-jetblue text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                    </div>
                    <div className="text-left">
                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Settlement Layer {!isCreator && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] italic leading-tight">
-                        {isCreator ? 'MANDATORY FOR AUTOMATED USDC PAYOUTS' : 'PREFERRED MERCHANT CHECKOUT WALLET'}
+                      <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
+                        {isCreator ? (formData.walletAddress ? 'WALLET LINKED FOR SETTLEMENT' : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
                       </p>
                    </div>
                 </div>
