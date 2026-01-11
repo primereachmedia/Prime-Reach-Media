@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
 interface ProfileBuilderProps {
@@ -16,6 +16,11 @@ interface ProfileBuilderProps {
 const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, initialTwitterHandle, isTwitterVerified, onUpdate, onSave, onLogout }) => {
   const [formData, setFormData] = useState({
     companyName: '',
+    mission: '',
+    companyType: '',
+    timeInBusiness: '',
+    industry: '',
+    primaryObjective: '',
     audienceDescription: '',
     image: null as string | null,
     walletAddress: initialWalletAddress || null as string | null,
@@ -34,6 +39,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const [isTerminating, setIsTerminating] = useState(false);
 
   const platforms = ['YOUTUBE', 'X', 'TIKTOK', 'KICK', 'TWITCH', 'INSTAGRAM', 'PUMPFUN', 'ZORA', 'DISCORD', 'OTHER'];
+  const industries = ['Crypto/Web3', 'Gaming', 'E-commerce', 'SaaS', 'Entertainment', 'FinTech', 'Lifestyle'];
 
   useEffect(() => {
     if (isTwitterVerified) setVerificationStage('success');
@@ -48,19 +54,23 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   };
 
   const generateSecureHandshake = () => {
-    if (!formData.twitterHandle || !formData.walletAddress) {
-      alert("WALLET LINK REQUIRED: Identity binding requires an active Phantom session.");
+    if (!formData.twitterHandle) {
+      alert("X HANDLE REQUIRED: Please enter your handle first.");
       return;
     }
     const handle = formData.twitterHandle.replace('@', '').toUpperCase();
-    const walletTail = formData.walletAddress.slice(-4).toUpperCase();
-    const token = `PRM-${handle}-${walletTail}-${Math.floor(1000 + Math.random() * 9000)}`;
+    // For creators, bind to wallet. For marketers, bind to random salt if wallet is missing.
+    const bindingRef = formData.walletAddress 
+      ? formData.walletAddress.slice(-4).toUpperCase() 
+      : Math.random().toString(36).substring(2, 6).toUpperCase();
+    
+    const token = `PRM-${handle}-${bindingRef}-${Math.floor(1000 + Math.random() * 9000)}`;
     setVerificationToken(token);
     setVerificationStage('handshake');
   };
 
   const openXToPost = () => {
-    const text = encodeURIComponent(`Verified Creator Identity on @PrimeReachMedia\n\nTOKEN: ${verificationToken}\nWALLET_REF: ${formData.walletAddress?.slice(0, 8)}...\n\n#PRM #CreatorEconomy`);
+    const text = encodeURIComponent(`Authenticating my authority for ${formData.twitterHandle} on @PrimeReachMedia.\n\nTOKEN: ${verificationToken}\n\n#PRM #VerifiedIdentity`);
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
   };
 
@@ -89,10 +99,10 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       
       const prompt = `Perform a strict identity audit. 
       1. Extract the X (Twitter) handle from the screenshot.
-      2. Extract the PRM token (format: PRM-HANDLE-WALLET-CODE).
+      2. Extract the PRM token (format: PRM-HANDLE-REF-CODE).
       3. Compare the handle found in the image with the expected handle: ${formData.twitterHandle}.
       4. Compare the token found in the image with the expected token: ${verificationToken}.
-      5. Is this a real live tweet or a mock-up?
+      5. Confirm if this is a real live tweet screenshot.
       Respond ONLY with a JSON object: {"handleMatches": boolean, "tokenMatches": boolean, "isRealPost": boolean, "extractedHandle": "string", "reasoning": "string"}`;
 
       const response = await ai.models.generateContent({
@@ -115,7 +125,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       ];
 
       for (let i = 0; i < logSequence.length; i++) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 600));
         setScanLogs(prev => [...prev, logSequence[i]]);
       }
 
@@ -129,11 +139,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         setTimeout(() => {
           alert(`IDENTITY DISCREPANCY: ${auditResult.reasoning}`);
           setVerificationStage('handshake');
-        }, 2000);
+        }, 1500);
       }
     } catch (err) {
       console.error(err);
-      setScanLogs(prev => [...prev, "ERROR: AI SUBSYSTEM OFFLINE. RETRYING..."]);
+      setScanLogs(prev => [...prev, "ERROR: AI SUBSYSTEM OFFLINE."]);
     } finally {
       setIsAiAnalyzing(false);
     }
@@ -151,16 +161,33 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     } catch (err) { console.error(err); }
   };
 
-  const handleLogoutFlow = () => {
-    setIsTerminating(true);
-    setTimeout(() => onLogout(), 1200);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFormData(prev => ({ ...prev, image: reader.result as string }));
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.isTwitterVerified) {
+      alert("X Verification is mandatory for account security.");
+      return;
+    }
+    if (userRole === 'creator' && !formData.walletAddress) {
+      alert("Creators must link a Phantom wallet to receive payments.");
+      return;
+    }
+    onSave({ ...formData, email: userEmail });
   };
 
   if (isTerminating) {
     return (
       <div className="min-h-screen bg-jetblue flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-8"></div>
-        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">DESTROYING IDENTITY SESSION</h2>
+        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">PURGING SESSION</h2>
       </div>
     );
   }
@@ -170,138 +197,192 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       <div className="max-w-4xl mx-auto">
         
         <div className="flex justify-end mb-8">
-           <button onClick={handleLogoutFlow} className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-red-500 transition-all flex items-center gap-3">
+           <button onClick={() => {setIsTerminating(true); setTimeout(() => onLogout(), 1200);}} className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-red-500 transition-all flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Terminate Session</span>
+             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">End Session</span>
            </button>
         </div>
 
         <div className="mb-12 text-center">
-          <h1 className="text-5xl font-black text-jetblue dark:text-white uppercase italic tracking-tighter leading-none">COMMAND CENTER</h1>
-          <p className="text-[10px] font-bold text-slate-400 tracking-[0.5em] uppercase mt-4 italic">STRICT IDENTITY ARCHITECTURE</p>
+          <h1 className="text-4xl md:text-5xl font-black text-jetblue dark:text-white uppercase italic tracking-tighter leading-none">IDENTITY SETUP</h1>
+          <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mt-4 italic">ROLE: {userRole}</p>
         </div>
 
-        <div className="space-y-12">
+        <form onSubmit={handleSubmit} className="space-y-12">
           
-          {/* STEP 1: WALLET BINDING (MANDATORY) */}
+          {/* Section 1: Basic Identity */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-               <div className="text-left max-w-sm">
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">1. Cryptographic Anchor</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase italic leading-relaxed">Your identity is bound to your Solana wallet. All tokens are unique to this specific hash.</p>
-               </div>
-               {formData.walletAddress ? (
-                 <div className="px-8 py-4 bg-green-500/5 border-2 border-green-500/20 text-green-600 rounded-2xl text-xs font-black uppercase tracking-widest">
-                   {formData.walletAddress.slice(0, 8)}...{formData.walletAddress.slice(-8)}
-                 </div>
-               ) : (
-                 <button onClick={handleConnectWallet} className="px-10 py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue-bright transition-all shadow-xl">Link Phantom</button>
-               )}
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">01</span>
+              Identity Assets
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <div className="flex flex-col items-center">
+                <input type="file" id="branding-asset" className="hidden" accept="image/*" onChange={handleImageChange} />
+                <label htmlFor="branding-asset" className="block w-40 h-40 rounded-[2rem] border-4 border-dashed border-slate-200 dark:border-slate-800 hover:border-jetblue transition-all cursor-pointer overflow-hidden relative group bg-slate-50 dark:bg-slate-950 shadow-inner">
+                  {formData.image ? (
+                    <img src={formData.image} className="w-full h-full object-cover" alt="Profile" />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 group-hover:text-jetblue p-4 text-center">
+                      <span className="text-[9px] font-black uppercase tracking-widest">Upload Image</span>
+                    </div>
+                  )}
+                </label>
+              </div>
+              <div className="md:col-span-2 space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{userRole === 'marketer' ? 'Company Name' : 'Display Name'}</label>
+                  <input type="text" required value={formData.companyName} onChange={(e) => setFormData(prev => ({...prev, companyName: e.target.value}))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Authenticated Email</label>
+                  <input type="text" disabled value={userEmail} className="w-full bg-slate-100 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold text-slate-400 opacity-60" />
+                </div>
+              </div>
             </div>
           </section>
 
-          {/* STEP 2: AI IDENTITY AUDIT */}
-          <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden relative">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8">2. Identity Audit</h2>
+          {/* Section 2: Business/Creator Logic */}
+          <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">02</span>
+              {userRole === 'marketer' ? 'Professional Strategy' : 'Reach & Audience'}
+            </h2>
+            
+            {userRole === 'marketer' ? (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Industry Sector</label>
+                    <select value={formData.industry} onChange={(e) => setFormData(p => ({...p, industry: e.target.value}))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue">
+                      <option value="">Select Industry</option>
+                      {industries.map(i => <option key={i} value={i}>{i}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Objective</label>
+                    <input type="text" value={formData.primaryObjective} onChange={(e) => setFormData(p => ({...p, primaryObjective: e.target.value}))} placeholder="e.g. Sales, Awareness, ROI" className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Brand Mission / Description</label>
+                  <textarea rows={4} value={formData.mission} onChange={(e) => setFormData(p => ({...p, mission: e.target.value}))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[1.5rem] px-6 py-6 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none" placeholder="What is your brand's core mission?" />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Distribution Matrix</label>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {platforms.map(p => (
+                      <button key={p} type="button" onClick={() => togglePlatform(p)} className={`p-4 rounded-xl font-black text-[10px] border-2 transition-all ${formData.selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}>{p}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Audience Demographics</label>
+                  <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({...p, audienceDescription: e.target.value}))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[1.5rem] px-6 py-6 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none" placeholder="Describe your core viewers/segments..." />
+                </div>
+              </div>
+            )}
+          </section>
 
-            <div className={`p-10 rounded-[2.5rem] border-2 border-dashed transition-all duration-300 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>
+          {/* Section 3: Verification & Wallet */}
+          <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-12">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">03</span>
+              Security Protocol
+            </h2>
+
+            {/* X AUTHORITY */}
+            <div className={`p-8 rounded-[2.5rem] border-2 border-dashed transition-all duration-300 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-inner'}`}>
                <div className="flex flex-col items-center">
-                  
                   {verificationStage === 'idle' && (
-                    <div className="w-full max-w-sm space-y-6 text-center">
-                       <input 
-                         type="text" 
-                         value={formData.twitterHandle} 
-                         onChange={(e) => setFormData(prev => ({...prev, twitterHandle: e.target.value}))}
-                         placeholder="@CreatorHandle"
-                         className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-8 py-6 text-xl font-black dark:text-white outline-none focus:border-jetblue text-center"
-                       />
-                       <button onClick={generateSecureHandshake} className="w-full py-6 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue-bright transition-all">Generate Bound Token</button>
+                    <div className="w-full max-w-sm space-y-4 text-center">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">BIND X ACCOUNT</h4>
+                       <input type="text" value={formData.twitterHandle} onChange={(e) => setFormData(p => ({...p, twitterHandle: e.target.value}))} placeholder="@YourHandle" className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-4 text-lg font-black dark:text-white outline-none focus:border-jetblue text-center" />
+                       <button type="button" onClick={generateSecureHandshake} className="w-full py-4 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all">Start Authority Scan</button>
                     </div>
                   )}
 
                   {verificationStage === 'handshake' && (
-                    <div className="w-full max-w-lg space-y-8 text-center">
-                       <div className="p-8 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">CRYPTOGRAPHIC HANDSHAKE</p>
-                          <p className="text-2xl font-black text-jetblue dark:text-jetblue-light mb-8 select-all tracking-widest">{verificationToken}</p>
-                          
-                          <button onClick={openXToPost} className="w-full py-5 bg-black text-white rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 mb-6">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            Post to X
-                          </button>
-
-                          <div className="relative pt-6 border-t border-slate-100 dark:border-slate-700">
-                             <input type="file" id="evidence" className="hidden" accept="image/*" onChange={handleEvidenceUpload} />
-                             <label htmlFor="evidence" className="w-full flex items-center justify-center gap-3 py-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-black text-slate-400 uppercase cursor-pointer hover:border-jetblue transition-all">
-                               Upload Screenshot of Post
-                             </label>
+                    <div className="w-full max-w-lg space-y-6 text-center">
+                       <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SECURE TOKEN</p>
+                          <p className="text-xl font-black text-jetblue dark:text-jetblue-light mb-6 select-all tracking-wider">{verificationToken}</p>
+                          <button type="button" onClick={openXToPost} className="w-full py-4 bg-black text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 mb-4">Post Handshake</button>
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                             <input type="file" id="ev" className="hidden" accept="image/*" onChange={handleEvidenceUpload} />
+                             <label htmlFor="ev" className="w-full flex items-center justify-center gap-3 py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black text-slate-400 uppercase cursor-pointer">Upload Post Screenshot</label>
                           </div>
                        </div>
                     </div>
                   )}
 
                   {verificationStage === 'audit' && (
-                    <div className="w-full max-w-lg text-center space-y-6">
-                       <img src={evidenceImage!} className="w-full rounded-3xl border-4 border-white dark:border-slate-800 shadow-2xl mb-6" />
-                       <button onClick={runAiForensicAudit} className="w-full py-6 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl">Execute AI Identity Scan</button>
+                    <div className="w-full max-w-sm text-center space-y-4">
+                       <img src={evidenceImage!} className="w-full rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl" />
+                       <button type="button" onClick={runAiForensicAudit} className="w-full py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl">Execute Forensic Audit</button>
                     </div>
                   )}
 
                   {verificationStage === 'scanning' && (
-                    <div className="w-full max-w-lg p-10 bg-slate-900 rounded-[3rem] border border-white/10 text-left shadow-2xl">
-                       <div className="flex items-center gap-4 mb-8">
-                          <div className="w-10 h-10 border-4 border-jetblue-light border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-[11px] font-black text-white uppercase tracking-[0.5em]">AI FORENSIC ANALYSIS...</span>
+                    <div className="w-full max-w-md p-8 bg-slate-900 rounded-[2rem] text-left border border-white/10 shadow-2xl">
+                       <div className="flex items-center gap-3 mb-6">
+                          <div className="w-6 h-6 border-2 border-jetblue-light border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">AI SCANNING TIMELINE...</span>
                        </div>
-                       <div className="space-y-3 font-mono text-[11px] text-green-400">
-                          {scanLogs.map((log, i) => (
-                            <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
-                               <span className="text-slate-600 opacity-50">[{new Date().toLocaleTimeString()}]</span>
-                               <span className="uppercase">{log}</span>
-                            </div>
-                          ))}
+                       <div className="space-y-2 font-mono text-[10px] text-green-400">
+                          {scanLogs.map((log, i) => <div key={i} className="flex gap-2"><span>•</span><span className="uppercase">{log}</span></div>)}
                        </div>
                     </div>
                   )}
 
                   {verificationStage === 'success' && (
-                    <div className="w-full p-12 bg-blue-500/5 rounded-[3rem] border-4 border-blue-500/10 text-center animate-in zoom-in duration-700 shadow-2xl">
-                       <div className="flex justify-center mb-6">
-                         <div className="bg-blue-600 text-white p-4 rounded-full shadow-2xl transform -translate-y-4 animate-bounce">
-                           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z"/></svg>
-                         </div>
+                    <div className="text-center p-6 animate-in zoom-in duration-500">
+                       <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z"/></svg>
                        </div>
-                       <h4 className="text-3xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter mb-2">IDENTITY ANCHORED</h4>
-                       <p className="text-xl font-black text-slate-900 dark:text-white mb-10">{formData.twitterHandle}</p>
-                       <button onClick={() => {setVerificationStage('idle'); setFormData(p => ({...p, isTwitterVerified: false})); onUpdate({isTwitterVerified: false});}} className="px-10 py-4 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-black text-slate-400 hover:text-red-500 hover:border-red-500 uppercase tracking-widest transition-all">Revoke Authority</button>
+                       <h4 className="text-2xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">{formData.twitterHandle}</h4>
+                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 mb-6 italic">SECURED VIA PRM FORENSIC V3</p>
+                       <button type="button" onClick={() => {setVerificationStage('idle'); setFormData(p => ({...p, isTwitterVerified: false})); onUpdate({isTwitterVerified: false});}} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">[ Revoke ]</button>
                     </div>
                   )}
                </div>
             </div>
+
+            {/* PHANTOM WALLET - MANDATORY FOR CREATOR, OPTIONAL FOR MARKETER */}
+            <div className={`p-10 rounded-[2.5rem] border-2 border-dashed transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="text-left max-w-sm">
+                  <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest">
+                    SOLANA SETTLEMENT {userRole === 'marketer' && <span className="text-[10px] text-slate-400 ml-2">(OPTIONAL)</span>}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 italic leading-relaxed">
+                    {userRole === 'creator' ? 'Mandatory for instant payouts via Phantom.' : 'Link your wallet for easier marketplace checkout.'}
+                  </p>
+                </div>
+                {formData.walletAddress ? (
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/30 text-green-600 rounded-xl text-[11px] font-black tracking-widest uppercase">
+                      {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
+                    </span>
+                    <button type="button" onClick={() => setFormData(p => ({...p, walletAddress: null}))} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={handleConnectWallet} className="px-10 py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20">Link Phantom</button>
+                )}
+              </div>
+            </div>
           </section>
 
-          {/* Section 3: Distribution Matrix */}
-          {userRole === 'creator' && (
-            <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8">3. Reach Matrix</h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {platforms.map(platform => (
-                  <button key={platform} type="button" onClick={() => togglePlatform(platform)} className={`p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 text-center ${formData.selectedPlatforms.includes(platform) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/40'}`}>
-                    {platform}
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <div className="flex justify-center md:justify-end pt-12 pb-40">
-            <button onClick={() => onSave({...formData, email: userEmail})} className="w-full md:w-auto px-24 py-10 bg-jetblue text-white rounded-[3rem] font-black text-lg uppercase tracking-[0.5em] hover:bg-jetblue-bright transition-all shadow-2xl flex items-center justify-center gap-5">
-              DEPLOY PROFILE
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          <div className="flex justify-center md:justify-end pt-8 pb-32">
+            <button type="submit" className="w-full md:w-auto px-20 py-8 bg-jetblue text-white rounded-[2.5rem] font-black text-base uppercase tracking-[0.5em] hover:bg-jetblue-bright transition-all shadow-2xl flex items-center justify-center gap-4">
+              Save & Launch Profile
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
