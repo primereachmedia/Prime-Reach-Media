@@ -5,6 +5,7 @@ interface CreatorHubProps {
   onLogout: () => void;
   userEmail: string;
   onAddPlacement: (data: any) => void;
+  onEditProfile?: () => void;
 }
 
 interface NewSlotData {
@@ -29,7 +30,7 @@ const TIMEZONES = [
   { label: 'JST (Tokyo)', value: 'Asia/Tokyo' },
 ];
 
-const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlacement }) => {
+const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlacement, onEditProfile }) => {
   const [activeTab, setActiveTab] = useState<'slots' | 'revenue' | 'analytics'>('slots');
   const [isListingMode, setIsListingMode] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -84,9 +85,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
 
   const convertToEST = (dateStr: string, timeStr: string, sourceTz: string) => {
     try {
-      // Create a date object based on the source timezone
       const dt = new Date(`${dateStr}T${timeStr}:00`);
-      // We use Intl to format it into EST
       const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/New_York',
         year: 'numeric',
@@ -128,7 +127,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
       ...formData,
       normalizedDate: estData.displayDate,
       normalizedTime: estData.displayTime,
-      date: estData.fullDate // This will be used as the primary display in marketplace
+      date: estData.fullDate 
     };
 
     onAddPlacement(finalData);
@@ -151,6 +150,53 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
     }, 2000);
   };
 
+  const WelcomeScreen = () => (
+    <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-16 shadow-2xl border border-slate-100 dark:border-slate-800 transition-all">
+       <div className="max-w-3xl mx-auto text-center space-y-12">
+          <div className="space-y-4">
+             <div className="w-24 h-24 bg-jetblue/5 dark:bg-prmgold/5 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-jetblue/20 dark:border-prmgold/20 animate-pulse">
+                <svg className="w-10 h-10 text-jetblue dark:text-prmgold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M5 13l4 4L19 7" strokeWidth={3}/>
+                </svg>
+             </div>
+             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol</h2>
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Awaiting First Deployment</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
+                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 01</span>
+                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Verify Profile</h4>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Ensure your X handles and Phantom wallets are anchored for secure USDC settlement.</p>
+                <button 
+                  onClick={onEditProfile}
+                  className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all"
+                >
+                  My Profile
+                </button>
+             </div>
+             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2"><div className="w-2 h-2 bg-prmgold rounded-full animate-ping"></div></div>
+                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 02</span>
+                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Deploy Slot</h4>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Upload a broadcast preview and set your temporal parameters in our 7-day window.</p>
+                <button 
+                  onClick={() => setIsListingMode(true)}
+                  className="w-full py-3 bg-jetblue text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue-bright transition-all"
+                >
+                  List New Slot
+                </button>
+             </div>
+             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors opacity-50 grayscale pointer-events-none">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Step 03</span>
+                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Growth</h4>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Automated revenue tracking and analytics will populate here once ads are active.</p>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+
   if (isListingMode) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -169,7 +215,6 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-12 pb-40">
-            {/* Visual Anchor Section */}
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10 italic">1. Broadast Composition (Visual Anchor)</label>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -197,12 +242,10 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
               </div>
             </div>
 
-            {/* Time and Sync Section */}
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">2. Temporal Synchronization (7-Day Window)</label>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                {/* Custom Calendar */}
                 <div className="space-y-6">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Pick Date (Max +7 Days)</label>
                   <div className="grid grid-cols-4 gap-3">
@@ -220,7 +263,6 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
                   </div>
                 </div>
 
-                {/* Time & Zone Selection */}
                 <div className="space-y-10">
                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-4">
@@ -256,7 +298,6 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
               </div>
             </div>
 
-            {/* Distribution & Reach Section */}
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">3. Distribution & Reach Parameters</label>
               
@@ -335,7 +376,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-6 transition-colors">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
           <div className="space-y-2">
@@ -349,7 +390,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800">
+            <div key={i} className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 transition-transform hover:-translate-y-1">
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">{stat.label}</p>
                <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2 italic">{stat.value}</h3>
                <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">{stat.trend}</p>
@@ -361,13 +402,9 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-12 py-6 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === tab ? 'text-jetblue dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}>{tab}{activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-1 bg-jetblue rounded-t-full shadow-[0_0_15px_rgba(0,32,91,0.5)]"></div>}</button>
           ))}
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 shadow-2xl border border-slate-100 dark:border-slate-800 min-h-[400px] flex items-center justify-center text-center">
-           <div className="space-y-6">
-              <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-slate-200 dark:border-slate-700"><svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" strokeWidth={3}/></svg></div>
-              <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">DATA PIPELINE INITIALIZING</h4>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em] max-w-sm">No active entries found for {activeTab}. Once you list your first slot and verify reach, metrics will populate here in real-time.</p>
-           </div>
-        </div>
+        
+        <WelcomeScreen />
+
       </div>
     </div>
   );

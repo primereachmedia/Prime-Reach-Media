@@ -226,6 +226,7 @@ const App: React.FC = () => {
             onLogout={handleLogout} 
             userEmail={user.email || ''} 
             onAddPlacement={handleAddPlacement}
+            onEditProfile={() => setView('profile')}
           />
         ) : view === 'marketplace' ? (
           <Marketplace 
