@@ -25,7 +25,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onBack, onGetStarted }) => {
 
           <div className="space-y-4">
             <span className="text-prmgold font-black text-[10px] tracking-[0.6em] uppercase block">Protocol Briefing</span>
-            <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.9]">
+            <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-tight pr-4">
               THE AUTOMATED <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">PLACEMENT</span> <br />
               PROTOCOL
