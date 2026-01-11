@@ -78,6 +78,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       
       const signedMessage = await solana.signMessage(encodedMessage, "utf8");
       
+      // Checking for the existence of signature or signedMessage itself
       if (signedMessage) {
         setFormData(prev => ({ 
           ...prev, 
@@ -87,7 +88,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       }
     } catch (err) { 
       console.error('Wallet Authentication Failed:', err);
-      alert('Authentication failed. You must sign the message in your wallet to proceed.');
+      // Only alert if it's not a user rejection (Phantom error code 4001)
+      const error = err as any;
+      if (error?.code !== 4001) {
+        alert('Authentication failed. Please ensure your wallet is unlocked and try again.');
+      }
     } finally {
       setIsSigningWallet(false);
     }
@@ -135,7 +140,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         </div>
 
         <div className="mb-16 text-center">
-          <h1 className="text-5xl md:text-6xl font-black text-jetblue dark:text-white uppercase italic tracking-tighter leading-none mb-4">PROFILE ANCHOR</h1>
+          <h1 className="text-5xl md:text-6xl font-black text-jetblue dark:text-white uppercase italic tracking-tight leading-none mb-4 px-6">PROFILE ANCHOR</h1>
           <p className="text-[10px] font-black text-slate-400 tracking-[0.4em] uppercase italic">ENCRYPTED PORTAL ACCESS: {userRole.toUpperCase()}</p>
         </div>
 
