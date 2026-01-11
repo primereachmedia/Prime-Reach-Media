@@ -7,14 +7,13 @@ interface AuthModalProps {
   initialMode: 'signin' | 'signup';
 }
 
-type AuthStep = 'initial' | 'verifying' | 'success';
+type AuthStep = 'initial' | 'success';
 type UserPath = 'signin' | 'creator' | 'marketer' | null;
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [step, setStep] = useState<AuthStep>('initial');
   const [path, setPath] = useState<UserPath>(null);
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +21,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setStep('initial');
       setPath(null);
       setEmail('');
-      setOtp(['', '', '', '', '', '']);
       setIsLoading(false);
     }
   }, [isOpen]);
@@ -36,34 +34,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     setPath(selectedPath);
     
-    // Simulate sending the code to the user's email
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Brief delay to simulate processing before direct success
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    setIsLoading(false);
-    setStep('verifying');
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const verifyCode = async () => {
-    setIsLoading(true);
-    // Simulate verification check
-    await new Promise(resolve => setTimeout(resolve, 2000));
     setIsLoading(false);
     setStep('success');
-    
-    console.log(`User ${email} verified via ${path} path. Routed to PRM Command.`);
   };
 
   const renderSuccess = () => (
@@ -75,53 +50,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       </div>
       <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic mb-4 tracking-tighter">ACCESS GRANTED</h3>
       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase max-w-sm leading-relaxed mb-8">
-        Identity verified. Your session is now synced with <span className="text-jetblue font-black">PRM CENTRAL COMMAND</span>.
+        Your account for <span className="font-black text-slate-900 dark:text-white">{email}</span> has been provisioned. 
+        You now have <span className="text-jetblue font-black">{path?.toUpperCase()}</span> level access to PRM.
       </p>
       <button 
         onClick={onClose}
         className="px-12 py-4 bg-[#001A41] text-white rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue transition-all shadow-2xl"
       >
-        Continue to Dashboard
-      </button>
-    </div>
-  );
-
-  const renderVerification = () => (
-    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[500px]">
-      <div className="mb-8">
-        <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">CHECK YOUR INBOX</h3>
-        <p className="text-[10px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-2">CODE SENT TO: {email}</p>
-      </div>
-
-      <div className="flex gap-3 mb-10">
-        {otp.map((digit, idx) => (
-          <input
-            key={idx}
-            id={`otp-${idx}`}
-            type="text"
-            maxLength={1}
-            value={digit}
-            onChange={(e) => handleOtpChange(idx, e.target.value)}
-            className="w-12 h-16 bg-slate-100 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl text-center text-2xl font-black text-jetblue dark:text-white focus:border-jetblue outline-none transition-all"
-          />
-        ))}
-      </div>
-
-      <button 
-        onClick={verifyCode}
-        disabled={otp.some(d => !d) || isLoading}
-        className={`w-full max-w-xs py-4 rounded-xl font-black text-xs uppercase tracking-[0.3em] transition-all shadow-xl ${
-          isLoading ? 'bg-slate-100 text-slate-400' : 'bg-jetblue text-white hover:bg-jetblue-bright'
-        }`}
-      >
-        {isLoading ? 'VERIFYING SIGNATURE...' : 'CONFIRM ACCESS'}
-      </button>
-
-      <button 
-        onClick={() => setStep('initial')}
-        className="mt-6 text-[10px] font-black text-slate-400 hover:text-jetblue uppercase tracking-widest underline decoration-2 underline-offset-4"
-      >
-        Entered wrong email?
+        Enter Dashboard
       </button>
     </div>
   );
@@ -134,7 +70,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       {/* Main Container */}
       <div className="relative w-full max-w-7xl bg-white dark:bg-slate-950 rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-white/10">
         
-        {step === 'success' ? renderSuccess() : step === 'verifying' ? renderVerification() : (
+        {step === 'success' ? renderSuccess() : (
           <div className="flex flex-col lg:flex-row min-h-[650px]">
             
             {/* 1. SIGN IN TRACK */}
@@ -164,10 +100,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 />
                 <button 
                   type="submit" 
-                  disabled={isLoading && path === 'signin'}
-                  className="w-full bg-slate-900 dark:bg-slate-800 text-white py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-black transition-all shadow-xl group-hover:scale-[1.02]"
+                  disabled={isLoading}
+                  className="w-full bg-slate-900 dark:bg-slate-800 text-white py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-black transition-all shadow-xl group-hover:scale-[1.02] flex items-center justify-center gap-2"
                 >
-                  {isLoading && path === 'signin' ? 'GENERATING CODE...' : 'SEND ACCESS CODE'}
+                  {isLoading && path === 'signin' ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : 'AUTHENTICATE'}
                 </button>
               </form>
             </div>
@@ -185,7 +123,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <div className="mb-6">
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/80 uppercase tracking-widest mb-4">NEW CREATORS</div>
                 <h3 className="text-4xl font-black uppercase italic leading-[0.85] tracking-tighter">CREATOR <br /> SIGN UP</h3>
-                <p className="text-[10px] font-bold text-white/60 tracking-[0.2em] uppercase mt-4">USDC Monetization</p>
+                <p className="text-[10px] font-bold text-white/60 tracking-[0.2em] uppercase mt-4">Automated Monetization</p>
               </div>
 
               <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
@@ -199,10 +137,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 />
                 <button 
                   type="submit" 
-                  disabled={isLoading && path === 'creator'}
-                  className="w-full bg-white text-[#D4AF37] py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02]"
+                  disabled={isLoading}
+                  className="w-full bg-white text-[#D4AF37] py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2"
                 >
-                  {isLoading && path === 'creator' ? 'INITIALIZING...' : 'START ONBOARDING'}
+                  {isLoading && path === 'creator' ? (
+                    <div className="w-4 h-4 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
+                  ) : 'START ONBOARDING'}
                 </button>
               </form>
             </div>
@@ -234,10 +174,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 />
                 <button 
                   type="submit" 
-                  disabled={isLoading && path === 'marketer'}
-                  className="w-full bg-white text-[#001A41] py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02]"
+                  disabled={isLoading}
+                  className="w-full bg-white text-[#001A41] py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2"
                 >
-                  {isLoading && path === 'marketer' ? 'AUTHORIZING...' : 'START TEAM PORTAL'}
+                  {isLoading && path === 'marketer' ? (
+                    <div className="w-4 h-4 border-2 border-[#001A41]/30 border-t-[#001A41] rounded-full animate-spin" />
+                  ) : 'START TEAM PORTAL'}
                 </button>
               </form>
             </div>
