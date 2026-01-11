@@ -83,6 +83,12 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
     }
   };
 
+  const getTimeSegment = (hour: number) => {
+    if (hour >= 5 && hour < 12) return 'MORNING';
+    if (hour >= 12 && hour < 18) return 'AFTERNOON';
+    return 'NIGHT';
+  };
+
   const convertToEST = (dateStr: string, timeStr: string, sourceTz: string) => {
     try {
       const dt = new Date(`${dateStr}T${timeStr}:00`);
@@ -94,6 +100,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
+        weekday: 'short'
       });
       
       const parts = formatter.formatToParts(dt);
@@ -102,14 +109,20 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
       const h = parts.find(p => p.type === 'hour')?.value;
       const min = parts.find(p => p.type === 'minute')?.value;
       const ampm = parts.find(p => p.type === 'dayPeriod')?.value;
+      const dayShort = parts.find(p => p.type === 'weekday')?.value.toUpperCase();
       
+      const hourNum = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
+      const timeSegment = getTimeSegment(ampm === 'PM' && hourNum !== 12 ? hourNum + 12 : (ampm === 'AM' && hourNum === 12 ? 0 : hourNum));
+
       return {
         displayDate: `${m} ${d}`,
         displayTime: `${h}:${min} ${ampm} EST`,
-        fullDate: `${m.toUpperCase()} ${d}${getOrdinal(parseInt(d))} ${h}:${min}${ampm} EST`
+        fullDate: `${m.toUpperCase()} ${d}${getOrdinal(parseInt(d))} ${h}:${min}${ampm} EST`,
+        dayShort,
+        timeSegment
       };
     } catch (e) {
-      return { displayDate: dateStr, displayTime: timeStr, fullDate: `${dateStr} ${timeStr}` };
+      return { displayDate: dateStr, displayTime: timeStr, fullDate: `${dateStr} ${timeStr}`, dayShort: 'MON', timeSegment: 'AFTERNOON' };
     }
   };
 
@@ -127,7 +140,9 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
       ...formData,
       normalizedDate: estData.displayDate,
       normalizedTime: estData.displayTime,
-      date: estData.fullDate 
+      date: estData.fullDate,
+      day: estData.dayShort,
+      timeSegment: estData.timeSegment
     };
 
     onAddPlacement(finalData);

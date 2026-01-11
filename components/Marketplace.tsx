@@ -5,7 +5,7 @@ interface CardProps {
   id: string;
   image: string;
   title: string;
-  date: string; // This now holds the formatted EST date from the normalize sync
+  date: string; 
   day: string;
   time: string;
   platforms: string[];
@@ -28,10 +28,10 @@ interface MarketplaceProps {
 
 const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, onClick }) => (
   <div 
-    className="group flex flex-col items-center cursor-pointer"
+    className="group flex flex-col items-center cursor-pointer animate-in fade-in duration-700"
     onClick={onClick}
   >
-    <div className="relative w-full aspect-video rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 mb-8 group-hover:border-jetblue/50 transition-all shadow-lg group-hover:shadow-2xl">
+    <div className="relative w-full aspect-video rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 mb-6 group-hover:border-jetblue/50 transition-all shadow-lg group-hover:shadow-2xl">
       <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100 grayscale-[40%] group-hover:grayscale-0" />
       <div className="absolute bottom-6 left-6">
         <div className="bg-black/90 text-white text-[9px] font-black px-3 py-1 rounded-lg border border-white/20 tracking-[0.3em] uppercase backdrop-blur-md">AD SLOT</div>
@@ -48,20 +48,21 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
     </div>
     
     <div className="text-center w-full px-4">
-      <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-2 group-hover:text-jetblue transition-colors leading-none">{title}</h3>
-      <p className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-[0.3em] mb-4 italic leading-none">{date}</p>
+      <h3 className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-2 group-hover:text-jetblue transition-colors leading-none">{title}</h3>
+      <p className="text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-[0.3em] mb-4 italic leading-none">{date}</p>
       
       <div className="flex justify-center flex-wrap gap-2 mb-6">
-        {platforms.map(p => (
-          <span key={p} className="text-[9px] font-black px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 tracking-tighter uppercase">{p}</span>
+        {platforms.slice(0, 3).map(p => (
+          <span key={p} className="text-[8px] font-black px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-md border border-slate-200 dark:border-slate-700 tracking-tighter uppercase">{p}</span>
         ))}
+        {platforms.length > 3 && <span className="text-[8px] font-black text-slate-400">+{platforms.length - 3} MORE</span>}
       </div>
       
       <div className="flex items-center justify-center gap-3">
-        <span className="text-[9px] font-black px-3 py-1 bg-jetblue/10 text-jetblue dark:text-jetblue-light rounded-full uppercase tracking-[0.2em]">{category}</span>
+        <span className="text-[8px] font-black px-2.5 py-1 bg-jetblue/10 text-jetblue dark:text-jetblue-light rounded-full uppercase tracking-[0.2em]">{category}</span>
         <div className="flex items-baseline gap-1">
-           <span className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">{price}</span>
-           <span className="text-[10px] font-black text-slate-400">USDC</span>
+           <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter">{price}</span>
+           <span className="text-[9px] font-black text-slate-400">USDC</span>
         </div>
       </div>
     </div>
@@ -155,40 +156,40 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors pt-24 pb-48">
+    <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors pt-16 pb-32">
       <div className="max-w-7xl mx-auto px-6">
         
-        <div className="text-center mb-24">
-           <div className="flex items-center justify-center gap-6 mb-8">
-              <div className="h-[2px] w-12 bg-jetblue dark:bg-prmgold opacity-30"></div>
-              <h1 className="text-6xl md:text-8xl font-black text-jetblue dark:text-jetblue-light tracking-tighter uppercase leading-none italic">
+        <div className="text-center mb-16">
+           <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="h-[1px] w-8 bg-jetblue dark:bg-prmgold opacity-30"></div>
+              <h1 className="text-5xl md:text-7xl font-black text-jetblue dark:text-jetblue-light tracking-tighter uppercase leading-none italic">
                 MARKETPLACE
               </h1>
-              <div className="h-[2px] w-12 bg-jetblue dark:bg-prmgold opacity-30"></div>
+              <div className="h-[1px] w-8 bg-jetblue dark:bg-prmgold opacity-30"></div>
            </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Precision Scalable Monetization Layer</p>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Precision Scalable Monetization Layer</p>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-b border-slate-100 dark:border-slate-900 py-10 mb-20">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-b border-slate-100 dark:border-slate-900 py-8 mb-16">
           <button 
             onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-6 px-10 py-4 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:border-jetblue transition-all group"
+            className="flex items-center gap-4 px-8 py-3.5 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:border-jetblue transition-all group"
           >
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-900 dark:text-white group-hover:text-jetblue">ADJUST TARGETING STACK</span>
-            <div className="w-5 h-5 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-md group-hover:bg-jetblue/10">
-               <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900 dark:text-white group-hover:text-jetblue">ADJUST TARGETING STACK</span>
+            <div className="w-4 h-4 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-md group-hover:bg-jetblue/10">
+               <svg className="w-3 h-3 text-slate-400 group-hover:text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4" />
                </svg>
             </div>
           </button>
 
-          <div className="flex items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-2xl shadow-inner border border-slate-100 dark:border-white/5">
-            <button onClick={() => setStatus('active')} className={`px-10 py-3 rounded-xl font-black text-[11px] tracking-widest uppercase transition-all ${status === 'active' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>OPEN SLOTS ({filteredPlacements.length})</button>
-            <button onClick={() => setStatus('ended')} className={`px-10 py-3 rounded-xl font-black text-[11px] tracking-widest uppercase transition-all ${status === 'ended' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>HISTORICAL</button>
+          <div className="flex items-center bg-slate-50 dark:bg-slate-900 p-1.5 rounded-xl shadow-inner border border-slate-100 dark:border-white/5">
+            <button onClick={() => setStatus('active')} className={`px-8 py-2.5 rounded-lg font-black text-[10px] tracking-widest uppercase transition-all ${status === 'active' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>OPEN SLOTS ({filteredPlacements.length})</button>
+            <button onClick={() => setStatus('ended')} className={`px-8 py-2.5 rounded-lg font-black text-[10px] tracking-widest uppercase transition-all ${status === 'ended' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>HISTORICAL</button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
           {filteredPlacements.map((item) => (
             <PlacementCard 
               key={item.id} 
@@ -197,8 +198,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
             />
           ))}
           {filteredPlacements.length === 0 && (
-            <div className="col-span-full py-48 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-               <p className="text-2xl font-black text-slate-400 uppercase tracking-widest italic mb-6">NULL TARGETING RESULTS</p>
+            <div className="col-span-full py-32 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+               <p className="text-xl font-black text-slate-400 uppercase tracking-widest italic mb-6">NULL TARGETING RESULTS</p>
                <button onClick={resetFilters} className="text-jetblue font-black uppercase text-xs tracking-[0.4em] hover:underline underline-offset-8 transition-all">Reset Active Stack</button>
             </div>
           )}
@@ -206,76 +207,146 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
 
       </div>
 
+      {/* TARGETING FILTER DRAWER */}
+      <div className={`fixed inset-0 z-[80] transition-opacity duration-500 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFilterOpen(false)} />
+        <div className={`absolute top-0 left-0 h-full w-full max-w-md bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
+           <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">Targeting Stack</h2>
+              <button onClick={() => setIsFilterOpen(false)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+           </div>
+           
+           <div className="flex-1 overflow-y-auto p-8 space-y-10">
+              {/* Temporal Selection */}
+              <div className="space-y-6">
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Days)</h4>
+                 <div className="flex flex-wrap gap-2">
+                    {days.map(d => (
+                       <button key={d} onClick={() => toggleFilter(selectedDays, d, setSelectedDays)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedDays.includes(d) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{d}</button>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Day Part Selection */}
+              <div className="space-y-6">
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Day-Part)</h4>
+                 <div className="flex flex-wrap gap-2">
+                    {times.map(t => (
+                       <button key={t} onClick={() => toggleFilter(selectedTimes, t, setSelectedTimes)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedTimes.includes(t) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{t}</button>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Platform Distribution */}
+              <div className="space-y-6">
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Distribution Pipelines</h4>
+                 <div className="flex flex-wrap gap-2">
+                    {platformsList.map(p => (
+                       <button key={p} onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{p}</button>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Vertical / Genre */}
+              <div className="space-y-6">
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Industry Verticals</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                    {genres.map(g => (
+                       <button key={g} onClick={() => setSelectedGenre(selectedGenre === g ? '' : g)} className={`px-4 py-3 rounded-lg text-[9px] font-black border-2 transition-all text-left ${selectedGenre === g ? 'bg-prmgold border-prmgold text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{g}</button>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Logo Anchor */}
+              <div className="space-y-6">
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Precision Anchor Point</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                    {logoPositions.map(lp => (
+                       <button key={lp} onClick={() => setSelectedLogoPos(selectedLogoPos === lp ? '' : lp)} className={`px-4 py-3 rounded-lg text-[8px] font-black border-2 transition-all text-left ${selectedLogoPos === lp ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{lp}</button>
+                    ))}
+                 </div>
+              </div>
+           </div>
+
+           <div className="p-8 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4">
+              <button onClick={() => setIsFilterOpen(false)} className="w-full py-5 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:bg-jetblue-bright transition-all">Execute Targeting ({filteredPlacements.length} found)</button>
+              <button onClick={resetFilters} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Wipe targeting stack</button>
+           </div>
+        </div>
+      </div>
+
       {/* PLACEMENT DETAIL PANEL */}
-      <div className={`fixed inset-0 z-[70] transition-opacity duration-500 ${selectedPlacement ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[90] transition-opacity duration-500 ${selectedPlacement ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" onClick={() => !isPurchasing && !isSuccess && setSelectedPlacement(null)} />
         <div className={`absolute top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${selectedPlacement ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
           
-          <div className="p-10 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-6">
                <div className="px-3 py-1 bg-prmgold text-white font-black text-[10px] rounded uppercase italic">ACTIVE SLOT</div>
-               <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">{selectedPlacement?.title}</h2>
+               <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">{selectedPlacement?.title}</h2>
             </div>
             <button onClick={() => setSelectedPlacement(null)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-12 space-y-16">
-            <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group bg-slate-950">
+          <div className="flex-1 overflow-y-auto p-10 space-y-12">
+            <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group bg-slate-950">
                <img src={selectedPlacement?.image} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-all duration-700" />
                
                {/* PRECISE LOGO ANCHOR PREVIEW */}
-               <div className={`absolute p-6 bg-jetblue text-white rounded-2xl text-[10px] font-black shadow-2xl z-10 uppercase border border-white/20 backdrop-blur-md animate-pulse ${selectedPlacement ? getPlacementClasses(selectedPlacement.logoPlacement) : ''}`}>
+               <div className={`absolute p-5 bg-jetblue text-white rounded-xl text-[9px] font-black shadow-2xl z-10 uppercase border border-white/20 backdrop-blur-md animate-pulse ${selectedPlacement ? getPlacementClasses(selectedPlacement.logoPlacement) : ''}`}>
                   SPONSOR LOGO
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-prmgold rounded-full border-2 border-white"></div>
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-prmgold rounded-full border-2 border-white"></div>
                </div>
 
-               <div className="absolute bottom-8 right-8 p-6 bg-black/80 backdrop-blur-xl rounded-[2rem] border border-white/20 shadow-2xl">
-                  <p className="text-[10px] font-black text-prmgold uppercase tracking-[0.3em] mb-2 italic">ANCHOR COORDINATES</p>
-                  <p className="text-2xl font-black text-white uppercase italic tracking-tighter">{selectedPlacement?.logoPlacement}</p>
+               <div className="absolute bottom-6 right-6 p-4 bg-black/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
+                  <p className="text-[8px] font-black text-prmgold uppercase tracking-[0.3em] mb-1 italic">ANCHOR COORDINATES</p>
+                  <p className="text-xl font-black text-white uppercase italic tracking-tighter">{selectedPlacement?.logoPlacement}</p>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 space-y-8">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Stream Reach Parameters</h4>
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Broadcast Window (EST)</span>
-                       <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">{selectedPlacement?.date}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800 space-y-6">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-4">Stream Reach Parameters</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-3">
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Broadcast Window</span>
+                       <span className="text-lg font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">{selectedPlacement?.date}</span>
                     </div>
-                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Content Niche</span>
-                       <span className="text-xl font-black text-jetblue dark:text-jetblue-light uppercase tracking-tight">{selectedPlacement?.category}</span>
+                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-3">
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Content Niche</span>
+                       <span className="text-lg font-black text-jetblue dark:text-jetblue-light uppercase tracking-tight">{selectedPlacement?.category}</span>
                     </div>
-                    <div className="space-y-4">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Distribution Pipeline</span>
+                    <div className="space-y-3">
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Distribution Pipeline</span>
                        <div className="flex flex-wrap gap-2">
                           {selectedPlacement?.platforms.map(p => (
-                            <span key={p} className="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-[9px] font-black border border-slate-200 dark:border-slate-700">{p}</span>
+                            <span key={p} className="px-2.5 py-1 bg-white dark:bg-slate-800 rounded-lg text-[8px] font-black border border-slate-200 dark:border-slate-700">{p}</span>
                           ))}
                        </div>
                     </div>
                   </div>
                </section>
 
-               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] italic mb-8">Verified Identity</h4>
-                  <div className="flex items-center gap-6 mb-10">
-                    <div className="w-20 h-20 bg-jetblue rounded-[1.5rem] flex items-center justify-center text-white text-3xl font-black shadow-xl">
+               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Verified Identity</h4>
+                  <div className="flex items-center gap-5 mb-8">
+                    <div className="w-16 h-16 bg-jetblue rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-xl">
                        {selectedPlacement?.creator.charAt(0)}
                     </div>
                     <div>
-                       <h5 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{selectedPlacement?.creator}</h5>
+                       <h5 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{selectedPlacement?.creator}</h5>
                        <div className={`mt-1 flex items-center gap-2 ${selectedPlacement?.isVerified ? 'text-blue-500' : 'text-red-400'}`}>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                          <span className="text-[8px] font-black uppercase tracking-widest">{selectedPlacement?.isVerified ? 'IDENTITY VERIFIED' : 'PENDING AUDIT'}</span>
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                          <span className="text-[7px] font-black uppercase tracking-widest">{selectedPlacement?.isVerified ? 'IDENTITY VERIFIED' : 'PENDING AUDIT'}</span>
                        </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Viewers (CCV)</p>
+                  <div className="space-y-2">
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Viewers (CCV)</p>
                      <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic">{selectedPlacement?.viewers || 'N/A'}</p>
                   </div>
                </section>
@@ -283,22 +354,22 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
 
           </div>
 
-          <div className="p-12 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row items-center justify-between gap-8">
-            <div className="space-y-2 text-center sm:text-left">
-               <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">SETTLEMENT AMOUNT</p>
-               <div className="flex items-baseline justify-center sm:justify-start gap-3">
-                  <span className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{selectedPlacement?.price}</span>
-                  <span className="text-xl font-black text-slate-400 tracking-widest">USDC</span>
+          <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="space-y-1 text-center sm:text-left">
+               <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">SETTLEMENT AMOUNT</p>
+               <div className="flex items-baseline justify-center sm:justify-start gap-2">
+                  <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{selectedPlacement?.price}</span>
+                  <span className="text-lg font-black text-slate-400 tracking-widest">USDC</span>
                </div>
             </div>
             
             <button 
               disabled={isPurchasing || isSuccess}
               onClick={handleBuy}
-              className={`w-full sm:w-auto min-w-[350px] h-24 rounded-[2.5rem] font-black text-xl uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center justify-center gap-6 relative overflow-hidden ${
+              className={`w-full sm:w-auto min-w-[280px] h-20 rounded-[1.5rem] font-black text-lg uppercase tracking-[0.4em] shadow-xl transition-all flex items-center justify-center gap-4 relative overflow-hidden ${
                 isSuccess ? 'bg-green-500 text-white' : 
                 isPurchasing ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 
-                'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-2 active:scale-95'
+                'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
               }`}
             >
                {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING' : 'LOCK IN SLOT'}

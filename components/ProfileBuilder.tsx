@@ -76,21 +76,20 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       const message = `Prime Reach Media - Secure Wallet Sign-In\n\nTimestamp: ${new Date().toISOString()}\nWallet: ${publicKey}\n\nBy signing this message, you are authorizing this session for automated USDC settlement protocols.`;
       const encodedMessage = new TextEncoder().encode(message);
       
-      const signedMessage = await solana.signMessage(encodedMessage, "utf8");
+      const response = await solana.signMessage(encodedMessage, "utf8");
       
-      // Checking for the existence of signature or signedMessage itself
-      if (signedMessage) {
+      // Check for success: some wallets return an object with signature/publicKey, others return it directly
+      if (response) {
         setFormData(prev => ({ 
           ...prev, 
           walletAddress: publicKey,
           isWalletSigned: true 
         }));
       }
-    } catch (err) { 
+    } catch (err: any) { 
       console.error('Wallet Authentication Failed:', err);
       // Only alert if it's not a user rejection (Phantom error code 4001)
-      const error = err as any;
-      if (error?.code !== 4001) {
+      if (err?.code !== 4001) {
         alert('Authentication failed. Please ensure your wallet is unlocked and try again.');
       }
     } finally {
