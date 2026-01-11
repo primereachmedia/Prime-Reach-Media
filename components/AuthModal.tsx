@@ -172,9 +172,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </form>
             </div>
 
-            {/* 2. CREATOR TRACK */}
-            <div className="flex-1 p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 group hover:to-slate-100 dark:hover:to-slate-800 transition-colors">
-              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-sm">
+            {/* 2. CREATOR TRACK - CLASSIC GOLD THEME */}
+            <div className="flex-1 p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col bg-[#D4AF37] text-white group transition-all hover:bg-[#B8860B]">
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-white/10 bg-white/5 shadow-sm">
                 <img 
                   src="https://i.imgur.com/M3lbq0r.jpeg" 
                   alt="Creator Registration" 
@@ -183,9 +183,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 />
               </div>
               <div className="mb-6">
-                <div className="inline-block px-3 py-1 bg-jetblue/10 rounded-full text-[8px] font-black text-jetblue uppercase tracking-widest mb-4">NEW CREATORS</div>
-                <h3 className="text-4xl font-black text-jetblue dark:text-jetblue-light uppercase italic leading-[0.85] tracking-tighter">CREATOR <br /> SIGN UP</h3>
-                <p className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase mt-4">USDC Monetization</p>
+                <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/80 uppercase tracking-widest mb-4">NEW CREATORS</div>
+                <h3 className="text-4xl font-black uppercase italic leading-[0.85] tracking-tighter">CREATOR <br /> SIGN UP</h3>
+                <p className="text-[10px] font-bold text-white/60 tracking-[0.2em] uppercase mt-4">USDC Monetization</p>
               </div>
 
               <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
@@ -195,19 +195,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   required 
                   value={path === 'creator' ? email : ''}
                   onChange={(e) => { setPath('creator'); setEmail(e.target.value); }}
-                  className="w-full bg-white dark:bg-slate-800 rounded-xl px-6 py-4 text-[11px] font-black tracking-widest outline-none border-2 border-slate-200 dark:border-slate-700 focus:border-jetblue/30 dark:text-white transition-all shadow-sm" 
+                  className="w-full bg-white/10 rounded-xl px-6 py-4 text-[11px] font-black tracking-widest outline-none border-none text-white placeholder:text-white/40 transition-all focus:bg-white/20" 
                 />
                 <button 
                   type="submit" 
                   disabled={isLoading && path === 'creator'}
-                  className="w-full bg-jetblue text-white py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20 group-hover:scale-[1.02]"
+                  className="w-full bg-white text-[#D4AF37] py-5 rounded-xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02]"
                 >
                   {isLoading && path === 'creator' ? 'INITIALIZING...' : 'START ONBOARDING'}
                 </button>
               </form>
             </div>
 
-            {/* 3. MARKETER TRACK */}
+            {/* 3. MARKETER TRACK - BLUE THEME */}
             <div className="flex-1 p-8 md:p-10 flex flex-col bg-[#001A41] text-white group transition-all hover:bg-[#00255c]">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-white/10 bg-white/5">
                 <img 
