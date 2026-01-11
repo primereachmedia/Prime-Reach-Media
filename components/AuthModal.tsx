@@ -40,11 +40,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     
     const result = await sendVerificationEmail(email, selectedPath || 'unknown');
     
-    setIsLoading(false);
+    setIsLoading(true); // Keep loading state briefly for transition
     if (result.success) {
-      setStep('verify_inbox');
+      setTimeout(() => {
+        setIsLoading(false);
+        setStep('verify_inbox');
+      }, 500);
     } else {
-      setError('Unable to reach the PRM Email Server. Check your connection or configuration.');
+      setIsLoading(false);
+      // Map common errors to user-friendly messages
+      let message = 'Verification failed. Please try again.';
+      if (result.error === 'TEMPLATE_ID_MISSING') message = 'System Config Error: Template ID missing.';
+      else if (result.error?.includes('401') || result.error?.toLowerCase().includes('unauthorized')) message = 'Invalid API Key. Please use the PUBLIC KEY from EmailJS.';
+      else if (result.error) message = `Email Server Error: ${result.error}`;
+      
+      setError(message);
     }
   };
 
@@ -92,7 +102,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic mb-4 tracking-tighter tracking-tighter">ACCESS GRANTED</h3>
+      <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic mb-4 tracking-tighter">ACCESS GRANTED</h3>
       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase max-w-sm leading-relaxed mb-8">
         Identity confirmed. Your profile is now synced with the <span className="text-jetblue font-black">PRM CENTRAL HUB</span>.
       </p>
@@ -125,7 +135,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               <form onSubmit={(e) => handleInitialSubmit(e, 'signin')} className="mt-auto space-y-4">
-                {error && <div className="p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-lg mb-4">{error}</div>}
+                {error && path === 'signin' && <div className="p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-lg mb-4 leading-tight">{error}</div>}
                 <input 
                   type="email" placeholder="ENTER EMAIL" required 
                   value={path === 'signin' ? email : ''}
@@ -149,7 +159,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
-                {error && path === 'creator' && <div className="p-3 bg-black/20 text-white text-[10px] font-black uppercase tracking-widest rounded-lg mb-4">{error}</div>}
+                {error && path === 'creator' && <div className="p-3 bg-black/20 text-white text-[10px] font-black uppercase tracking-widest rounded-lg mb-4 leading-tight">{error}</div>}
                 <input 
                   type="email" placeholder="ENTER EMAIL" required 
                   value={path === 'creator' ? email : ''}
@@ -173,7 +183,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               <form onSubmit={(e) => handleInitialSubmit(e, 'marketer')} className="mt-auto space-y-4">
-                {error && path === 'marketer' && <div className="p-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg mb-4">{error}</div>}
+                {error && path === 'marketer' && <div className="p-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg mb-4 leading-tight">{error}</div>}
                 <input 
                   type="email" placeholder="BUSINESS EMAIL" required 
                   value={path === 'marketer' ? email : ''}

@@ -1,3 +1,4 @@
+
 /**
  * Prime Reach Media - Real Email Integration
  * Powered by EmailJS (https://www.emailjs.com/)
@@ -5,14 +6,15 @@
 import emailjs from 'https://esm.sh/@emailjs/browser';
 
 // --- CONFIGURATION ---
-// 1. Service ID: Obtained from your screenshot
+// Service ID from your previous setup
 const SERVICE_ID = "service_29a0q16"; 
 
-// 2. Template ID: Obtained from your screenshot
+// Template ID from your previous setup
 const TEMPLATE_ID = "template_nz2wwjf"; 
 
-// 3. Public Key: Provided by you 
-const PUBLIC_KEY = "e6GZzuU6yMrasp0IH8Uq0";
+// CORRECTED PUBLIC KEY from your latest screenshot
+// Note: We MUST use the Public Key for frontend integrations.
+const PUBLIC_KEY = "vMMvROc8gfXWbU0Ge";
 
 /**
  * Sends a verification email via EmailJS
@@ -21,19 +23,17 @@ export const sendVerificationEmail = async (email: string, role: string): Promis
   try {
     console.log(`[EmailService] Initializing transmission for: ${email} (${role})`);
 
-    // Safety check to prevent crashing if Template ID is still the placeholder
-    // Fix: Removed comparison with 'YOUR_TEMPLATE_ID' literal which caused a type overlap error after configuration.
     if (!TEMPLATE_ID) {
-      console.warn("⚠️ PRM ALERT: Template ID is missing in services/emailService.ts. Emails will not send until this is set.");
-      // Fallback simulation so the UI still works during your setup
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return { success: true }; 
+      return { success: false, error: 'TEMPLATE_ID_MISSING' };
     }
+
+    // Explicitly initialize with the correct PUBLIC KEY
+    emailjs.init(PUBLIC_KEY);
 
     const templateParams = {
       user_email: email,
       user_role: role.toUpperCase(),
-      to_email: email, // Ensure your EmailJS Template "To Email" field contains {{to_email}}
+      to_email: email, 
       reply_to: 'support@primereachmedia.com'
     };
 
@@ -45,14 +45,17 @@ export const sendVerificationEmail = async (email: string, role: string): Promis
     );
 
     if (response.status === 200) {
-      console.log('[EmailService] Status: Success. Transmission delivered to gateway.');
+      console.log('[EmailService] Status: Success. Transmission delivered.');
       return { success: true };
     } else {
-      throw new Error(`Email delivery failed with status: ${response.status}`);
+      console.error('[EmailService] API Error Response:', response);
+      return { success: false, error: `API_ERROR_${response.status}: ${response.text}` };
     }
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('[EmailService] Critical Error:', err);
-    return { success: false, error: 'SERVICE_CONNECTION_FAILED' };
+    // Surface the actual error message from EmailJS if available
+    const errorMsg = err?.text || err?.message || 'CONNECTION_FAILED';
+    return { success: false, error: errorMsg };
   }
 };
