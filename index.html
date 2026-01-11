@@ -5,6 +5,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prime Reach Media | Precision Creator Monetization</title>
+    <meta name="description" content="The world's first automated creator placement marketplace. Scalable, precision marketing with zero friction." />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Prime Reach Media" />
+    <meta property="og:description" content="Monetize your reach. Scale your brand. Automated placements for the modern creator economy." />
+    <meta property="og:type" content="website" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +36,16 @@
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
             },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
+            }
           }
         }
       }
@@ -38,6 +55,7 @@
         font-family: 'Inter', sans-serif;
         margin: 0;
         padding: 0;
+        -webkit-font-smoothing: antialiased;
       }
       #root:empty {
         display: flex;
@@ -48,15 +66,29 @@
       }
       #root:empty::after {
         content: "";
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255,255,255,0.1);
-        border-top-color: white;
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255,255,255,0.1);
+        border-top-color: #D4AF37;
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
       }
       @keyframes spin {
         to { transform: rotate(360deg); }
+      }
+      
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #1e293b;
       }
     </style>
   <script type="importmap">
