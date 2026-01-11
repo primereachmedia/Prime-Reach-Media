@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import ValueProp from './components/ValueProp';
-import Marketplace from './components/Marketplace';
-import AuthModal from './components/AuthModal';
+import Navbar from './components/Navbar.tsx';
+import Hero from './components/Hero.tsx';
+import ValueProp from './components/ValueProp.tsx';
+import Marketplace from './components/Marketplace.tsx';
+import AuthModal from './components/AuthModal.tsx';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'marketplace'>('landing');
