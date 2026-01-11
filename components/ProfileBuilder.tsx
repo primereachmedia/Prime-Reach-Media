@@ -26,7 +26,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     walletAddress: initialWalletAddress || null as string | null,
     twitterHandle: initialTwitterHandle || '',
     isTwitterVerified: isTwitterVerified,
-    isWalletSigned: false, // MANDATORY: Forced to false on every mount for "Sign Every Time" security
+    isWalletSigned: false, // ALWAYS false on mount to force "Sign Every Time"
     selectedPlatforms: [] as string[]
   });
 
@@ -69,18 +69,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     
     setIsSigningWallet(true);
     try {
-      // Step 1: Connect to Phantom
+      // Step 1: Connect
       const resp = await solana.connect();
       const publicKey = resp.publicKey.toString();
       
-      // Step 2: Request Message Signature for Session Verification
-      // This ensures the user actually owns the wallet and isn't just pasting an address
-      const message = `Prime Reach Media (PRM)\n\nSECURE IDENTITY ANCHOR\n\nSession: ${userEmail}\nTimestamp: ${new Date().toISOString()}\nWallet: ${publicKey}\n\nBy signing this, I verify ownership of this wallet for automated USDC payouts.`;
+      // Step 2: Sign
+      // Simplified message to ensure standard encoding across all browser environments
+      const message = `PRM AUTHENTICATION\nSession: ${userEmail}\nTimestamp: ${Date.now()}\n\nI verify ownership of this wallet for PRM secure settlement.`;
       const encodedMessage = new TextEncoder().encode(message);
       
+      // Request signature - Phantom standard method
       const signedMessage = await solana.signMessage(encodedMessage, "utf8");
       
-      // Step 3: Verify signature exists (Phantom returns an object with signature/publicKey)
       if (signedMessage) {
         setFormData(prev => ({ 
           ...prev, 
@@ -89,10 +89,10 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         }));
       }
     } catch (err: any) { 
-      console.error('[PRM Auth] Wallet Error:', err);
-      // Only alert if the error isn't just the user canceling (Code 4001)
+      console.warn('Phantom Authentication Result:', err);
+      // User rejection code is 4001, we don't need to alert on that
       if (err?.code !== 4001) {
-        alert('Verification Failed: Could not establish a secure handshake with your wallet. Please ensure Phantom is unlocked.');
+        alert('Authentication failed. Please ensure Phantom is unlocked and your connection is stable.');
       }
     } finally {
       setIsSigningWallet(false);
@@ -102,7 +102,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
-      alert("Security Requirement: Creators must anchor their identity by signing with a Phantom Wallet to enable automated USDC settlements.");
+      alert("Verification Required: Please sign the wallet message to finalize your profile.");
       return;
     }
     onSave(formData);
