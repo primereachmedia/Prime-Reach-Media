@@ -8,6 +8,25 @@ import AuthModal from './components/AuthModal.tsx';
 import ProfileBuilder from './components/ProfileBuilder.tsx';
 import CreatorHub from './components/CreatorHub.tsx';
 
+interface Placement {
+  id: string;
+  image: string;
+  title: string;
+  date: string;
+  day: string;
+  time: string;
+  platforms: string[];
+  category: string;
+  price: string;
+  creator: string;
+  logoPlacement: string;
+  creatorEmail: string;
+  twitterHandle: string;
+  isVerified: boolean;
+  totalBuys: number;
+  viewers?: string;
+}
+
 interface UserState {
   isLoggedIn: boolean;
   email: string | null;
@@ -16,9 +35,50 @@ interface UserState {
   walletAddress: string | null;
   twitterHandle: string | null;
   isTwitterVerified: boolean;
+  companyName?: string;
 }
 
-const STORAGE_KEY = 'prm_session_v1';
+const STORAGE_KEY = 'prm_session_v2';
+const PLACEMENTS_KEY = 'prm_placements_v1';
+
+const INITIAL_PLACEMENTS: Placement[] = [
+  {
+    id: "p1",
+    image: "https://images.unsplash.com/photo-1611974714658-75d32b33688e?auto=format&fit=crop&q=80&w=800",
+    title: "CHARTMASTER LIVE",
+    date: "MONDAY JULY 13TH 2PM - 4PM",
+    day: "MON",
+    time: "AFTERNOON",
+    platforms: ["YOUTUBE", "X"],
+    category: "CRYPTO",
+    price: "450",
+    creator: "ChartMaster",
+    logoPlacement: "TOP RIGHT",
+    creatorEmail: "verified@chartmaster.prm",
+    twitterHandle: "@ChartMaster_PRM",
+    isVerified: true,
+    totalBuys: 142,
+    viewers: "12,500"
+  },
+  {
+    id: "p2",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800",
+    title: "PRO GAMING ARENA",
+    date: "TUESDAY JULY 14TH 6PM - 8PM",
+    day: "TUE",
+    time: "NIGHT",
+    platforms: ["TWITCH", "YOUTUBE", "KICK"],
+    category: "GAMING",
+    price: "1200",
+    creator: "Ninja Clone",
+    logoPlacement: "TOP LEFT",
+    creatorEmail: "contact@ninjaclone.tv",
+    twitterHandle: "@NinjaClone_Official",
+    isVerified: true,
+    totalBuys: 894,
+    viewers: "45,000"
+  }
+];
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub'>('landing');
@@ -36,23 +96,30 @@ const App: React.FC = () => {
     };
   });
 
+  const [placements, setPlacements] = useState<Placement[]>(() => {
+    const saved = localStorage.getItem(PLACEMENTS_KEY);
+    if (saved) return JSON.parse(saved);
+    return INITIAL_PLACEMENTS;
+  });
+
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
     isOpen: false,
     mode: 'signin',
   });
 
-  // Persist user state
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   }, [user]);
 
-  // Handle post-login navigation
+  useEffect(() => {
+    localStorage.setItem(PLACEMENTS_KEY, JSON.stringify(placements));
+  }, [placements]);
+
   useEffect(() => {
     if (user.isLoggedIn) {
       if (!user.hasProfile) {
         setView('profile');
       } else {
-        // Only force view change if we are on landing or profile, let users stay on marketplace if they were browsing
         if (view === 'landing' || view === 'profile') {
           setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
         }
@@ -60,7 +127,6 @@ const App: React.FC = () => {
     }
   }, [user.isLoggedIn, user.hasProfile]);
 
-  // OAUTH CALLBACK DETECTOR
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -76,25 +142,44 @@ const App: React.FC = () => {
           isLoggedIn: true
         }));
         localStorage.removeItem('prm_x_auth_state');
-        localStorage.removeItem('prm_x_auth_verifier');
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
   }, []);
 
-  const navigateToHome = () => setView('landing');
-  const navigateToProfile = () => setView('profile');
-  const navigateToDash = () => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
+  const handleAddPlacement = (data: any) => {
+    const newPlacement: Placement = {
+      id: `p-${Date.now()}`,
+      image: data.image || "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
+      title: data.title,
+      date: data.date || "UPCOMING BROADCAST",
+      day: "MON", 
+      time: "AFTERNOON",
+      platforms: data.platforms,
+      category: data.genre,
+      price: data.price,
+      creator: user.companyName || "Verified Creator",
+      logoPlacement: data.placement,
+      creatorEmail: user.email || "support@primereach.prm",
+      twitterHandle: user.twitterHandle || "Unauthorized X",
+      isVerified: user.isTwitterVerified,
+      totalBuys: 0,
+      viewers: data.viewers
+    };
+    setPlacements(prev => [newPlacement, ...prev]);
+  };
 
-  const handleLoginSuccess = (email: string, role: string) => {
-    setUser(prev => ({
-      ...prev,
-      isLoggedIn: true,
-      email,
-      role: role as any,
-      hasProfile: false
-    }));
-    setAuthModal(prev => ({ ...prev, isOpen: false }));
+  const handleProfileSave = (data: any) => {
+    const updatedUser = { 
+      ...user, 
+      hasProfile: true,
+      walletAddress: data.walletAddress,
+      twitterHandle: data.twitterHandle,
+      isTwitterVerified: data.isTwitterVerified,
+      companyName: data.companyName
+    };
+    setUser(updatedUser);
+    setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
   };
 
   const handleLogout = () => {
@@ -111,26 +196,14 @@ const App: React.FC = () => {
     setView('landing');
   };
 
-  const handleProfileSave = (data: any) => {
-    const updatedUser = { 
-      ...user, 
-      hasProfile: true,
-      walletAddress: data.walletAddress,
-      twitterHandle: data.twitterHandle,
-      isTwitterVerified: data.isTwitterVerified
-    };
-    setUser(updatedUser);
-    setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
-  };
-
   return (
     <div className="min-h-screen flex flex-col text-slate-900 dark:text-slate-100 transition-colors bg-slate-50 dark:bg-slate-950">
       <Navbar 
-        onLogoClick={navigateToHome} 
+        onLogoClick={() => setView('landing')} 
         onAuthClick={(mode) => setAuthModal({ isOpen: true, mode })}
         isLoggedIn={user.isLoggedIn}
         userRole={user.role}
-        onProfileClick={user.hasProfile ? navigateToDash : navigateToProfile}
+        onProfileClick={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
         twitterHandle={user.twitterHandle}
         isVerified={user.isTwitterVerified}
       />
@@ -148,9 +221,14 @@ const App: React.FC = () => {
             onLogout={handleLogout}
           />
         ) : view === 'creator_hub' ? (
-          <CreatorHub onLogout={handleLogout} userEmail={user.email || ''} />
+          <CreatorHub 
+            onLogout={handleLogout} 
+            userEmail={user.email || ''} 
+            onAddPlacement={handleAddPlacement}
+          />
         ) : view === 'marketplace' ? (
           <Marketplace 
+            placements={placements}
             isLoggedIn={user.isLoggedIn}
             onAuthRequired={() => setAuthModal({ isOpen: true, mode: 'signin' })}
           />
@@ -183,7 +261,10 @@ const App: React.FC = () => {
         isOpen={authModal.isOpen} 
         initialMode={authModal.mode}
         onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))} 
-        onLoginSuccess={handleLoginSuccess}
+        onLoginSuccess={(email, role) => {
+          setUser(prev => ({ ...prev, isLoggedIn: true, email, role: role as any, hasProfile: false }));
+          setAuthModal(prev => ({ ...prev, isOpen: false }));
+        }}
       />
     </div>
   );

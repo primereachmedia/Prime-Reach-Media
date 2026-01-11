@@ -17,9 +17,11 @@ interface CardProps {
   twitterHandle: string;
   isVerified: boolean;
   totalBuys: number;
+  viewers?: string;
 }
 
 interface MarketplaceProps {
+  placements: CardProps[];
   isLoggedIn?: boolean;
   onAuthRequired?: () => void;
 }
@@ -66,7 +68,7 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
   </div>
 );
 
-const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired }) => {
+const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAuthRequired }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPlacement, setSelectedPlacement] = useState<CardProps | null>(null);
   const [status, setStatus] = useState<'active' | 'ended'>('active');
@@ -84,7 +86,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
   const times = ['MORNING', 'AFTERNOON', 'NIGHT'];
   const platformsList = ['YOUTUBE', 'X', 'TIKTOK', 'FACEBOOK', 'INSTAGRAM', 'TWITCH', 'KICK', 'PUMPFUN', 'ZORA', 'RUMBLE', 'DISCORD', 'OTHER'];
   const genres = ['CRYPTO', 'GAMING', 'JUST CHATTING', 'TECH', 'SPORTS', 'LIFESTYLE'];
-  const logoPositions = ['TOP LEFT', 'TOP MIDDLE', 'TOP RIGHT', 'BOTTOM LEFT', 'BOTTOM MIDDLE', 'BOTTOM RIGHT'];
+  const logoPositions = ['TOP LEFT', 'TOP CENTER', 'TOP RIGHT', 'BOTTOM LEFT', 'BOTTOM CENTER', 'BOTTOM RIGHT'];
 
   useEffect(() => {
     if (isFilterOpen || selectedPlacement) {
@@ -94,79 +96,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
     }
   }, [isFilterOpen, selectedPlacement]);
 
-  const allPlacements: CardProps[] = [
-    {
-      id: "p1",
-      image: "https://images.unsplash.com/photo-1611974714658-75d32b33688e?auto=format&fit=crop&q=80&w=800",
-      title: "CHARTMASTER LIVE",
-      date: "MONDAY JULY 13TH 2PM - 4PM",
-      day: "MON",
-      time: "AFTERNOON",
-      platforms: ["YOUTUBE", "X"],
-      category: "CRYPTO",
-      price: "450",
-      creator: "ChartMaster",
-      logoPlacement: "TOP RIGHT",
-      creatorEmail: "verified@chartmaster.prm",
-      twitterHandle: "@ChartMaster_PRM",
-      isVerified: true,
-      totalBuys: 142
-    },
-    {
-      id: "p2",
-      image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800",
-      title: "PRO GAMING ARENA",
-      date: "TUESDAY JULY 14TH 6PM - 8PM",
-      day: "TUE",
-      time: "NIGHT",
-      platforms: ["TWITCH", "YOUTUBE", "KICK"],
-      category: "GAMING",
-      price: "1200",
-      creator: "Ninja Clone",
-      logoPlacement: "TOP LEFT",
-      creatorEmail: "contact@ninjaclone.tv",
-      twitterHandle: "@NinjaClone_Official",
-      isVerified: true,
-      totalBuys: 894
-    },
-    {
-      id: "p3",
-      image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
-      title: "VIBE TALK SESSIONS",
-      date: "WEDNESDAY JULY 15TH 1PM - 3PM",
-      day: "WED",
-      time: "AFTERNOON",
-      platforms: ["KICK", "X"],
-      category: "JUST CHATTING",
-      price: "820",
-      creator: "Just Chatty",
-      logoPlacement: "BOTTOM MIDDLE",
-      creatorEmail: "vibe@chatty.co",
-      twitterHandle: "@JustChattyVibes",
-      isVerified: false,
-      totalBuys: 54
-    },
-    {
-      id: "p4",
-      image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800",
-      title: "PUMP WATCHER PRO",
-      date: "THURSDAY JULY 16TH 9PM - 12AM",
-      day: "THU",
-      time: "NIGHT",
-      platforms: ["PUMPFUN", "X"],
-      category: "CRYPTO",
-      price: "680",
-      creator: "TokenTrapper",
-      logoPlacement: "BOTTOM RIGHT",
-      creatorEmail: "team@tokentrapper.prm",
-      twitterHandle: "@TokenTrapper_PRM",
-      isVerified: true,
-      totalBuys: 43
-    }
-  ];
-
   const filteredPlacements = useMemo(() => {
-    return allPlacements.filter(p => {
+    return placements.filter(p => {
       if (selectedDays.length > 0 && !selectedDays.includes(p.day)) return false;
       if (selectedTimes.length > 0 && !selectedTimes.includes(p.time)) return false;
       if (selectedGenre && p.category !== selectedGenre) return false;
@@ -177,7 +108,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
       }
       return true;
     });
-  }, [selectedDays, selectedTimes, selectedPlatforms, selectedGenre, selectedLogoPos]);
+  }, [placements, selectedDays, selectedTimes, selectedPlatforms, selectedGenre, selectedLogoPos]);
 
   const toggleFilter = (list: string[], item: string, setFn: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (list.includes(item)) {
@@ -201,7 +132,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
       return;
     }
     setIsPurchasing(true);
-    // Simulate real USDC settlement
     setTimeout(() => {
       setIsPurchasing(false);
       setIsSuccess(true);
@@ -210,6 +140,18 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
         setSelectedPlacement(null);
       }, 3000);
     }, 2500);
+  };
+
+  const getPlacementClasses = (pos: string) => {
+    switch(pos) {
+      case 'TOP LEFT': return 'top-8 left-8';
+      case 'TOP CENTER': return 'top-8 left-1/2 -translate-x-1/2';
+      case 'TOP RIGHT': return 'top-8 right-8';
+      case 'BOTTOM LEFT': return 'bottom-8 left-8';
+      case 'BOTTOM CENTER': return 'bottom-8 left-1/2 -translate-x-1/2';
+      case 'BOTTOM RIGHT': return 'bottom-8 right-8';
+      default: return 'top-8 right-8';
+    }
   };
 
   return (
@@ -241,7 +183,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
           </button>
 
           <div className="flex items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-2xl shadow-inner border border-slate-100 dark:border-white/5">
-            <button onClick={() => setStatus('active')} className={`px-10 py-3 rounded-xl font-black text-[11px] tracking-widest uppercase transition-all ${status === 'active' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>OPEN SLOTS</button>
+            <button onClick={() => setStatus('active')} className={`px-10 py-3 rounded-xl font-black text-[11px] tracking-widest uppercase transition-all ${status === 'active' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>OPEN SLOTS ({filteredPlacements.length})</button>
             <button onClick={() => setStatus('ended')} className={`px-10 py-3 rounded-xl font-black text-[11px] tracking-widest uppercase transition-all ${status === 'ended' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>HISTORICAL</button>
           </div>
         </div>
@@ -264,14 +206,14 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
 
       </div>
 
-      {/* PLACEMENT DETAIL PANEL (SIDEBAR) */}
+      {/* PLACEMENT DETAIL PANEL */}
       <div className={`fixed inset-0 z-[70] transition-opacity duration-500 ${selectedPlacement ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" onClick={() => !isPurchasing && !isSuccess && setSelectedPlacement(null)} />
-        <div className={`absolute top-0 right-0 h-full w-full max-w-3xl bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${selectedPlacement ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+        <div className={`absolute top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${selectedPlacement ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
           
           <div className="p-10 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-6">
-               <div className="px-3 py-1 bg-prmgold text-white font-black text-[10px] rounded uppercase italic">SECURED</div>
+               <div className="px-3 py-1 bg-prmgold text-white font-black text-[10px] rounded uppercase italic">ACTIVE SLOT</div>
                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">{selectedPlacement?.title}</h2>
             </div>
             <button onClick={() => setSelectedPlacement(null)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
@@ -280,45 +222,64 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
           </div>
 
           <div className="flex-1 overflow-y-auto p-12 space-y-16">
-            <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group">
-               <img src={selectedPlacement?.image} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700" />
-               <div className="absolute top-8 left-8 p-6 bg-black/80 backdrop-blur-xl rounded-[2rem] border border-white/20 shadow-2xl">
-                  <p className="text-[10px] font-black text-prmgold uppercase tracking-[0.3em] mb-2">PRECISION ANCHOR</p>
+            <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group bg-slate-950">
+               <img src={selectedPlacement?.image} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-all duration-700" />
+               
+               {/* PRECISE LOGO ANCHOR PREVIEW */}
+               <div className={`absolute p-6 bg-jetblue text-white rounded-2xl text-[10px] font-black shadow-2xl z-10 uppercase border border-white/20 backdrop-blur-md animate-pulse ${selectedPlacement ? getPlacementClasses(selectedPlacement.logoPlacement) : ''}`}>
+                  SPONSOR LOGO
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-prmgold rounded-full border-2 border-white"></div>
+               </div>
+
+               <div className="absolute bottom-8 right-8 p-6 bg-black/80 backdrop-blur-xl rounded-[2rem] border border-white/20 shadow-2xl">
+                  <p className="text-[10px] font-black text-prmgold uppercase tracking-[0.3em] mb-2 italic">ANCHOR COORDINATES</p>
                   <p className="text-2xl font-black text-white uppercase italic tracking-tighter">{selectedPlacement?.logoPlacement}</p>
                </div>
             </div>
 
-            <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[4rem] p-12 border border-slate-100 dark:border-slate-800 space-y-12">
-               <div className="flex flex-col md:flex-row gap-10 items-start">
-                  <div className="w-32 h-32 bg-jetblue rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black shadow-2xl transform -rotate-3 group-hover:rotate-0 transition-transform">
-                     {selectedPlacement?.creator.charAt(0)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 space-y-8">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Stream Reach Parameters</h4>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Concurrent Viewers (CCV)</span>
+                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic">{selectedPlacement?.viewers || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Content Niche</span>
+                       <span className="text-xl font-black text-jetblue dark:text-jetblue-light uppercase tracking-tight">{selectedPlacement?.category}</span>
+                    </div>
+                    <div className="space-y-4">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Distribution Pipeline</span>
+                       <div className="flex flex-wrap gap-2">
+                          {selectedPlacement?.platforms.map(p => (
+                            <span key={p} className="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-[9px] font-black border border-slate-200 dark:border-slate-700">{p}</span>
+                          ))}
+                       </div>
+                    </div>
                   </div>
-                  <div className="flex-1 space-y-8">
-                     <div className="flex items-center gap-4 flex-wrap">
-                        <h4 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">{selectedPlacement?.creator}</h4>
-                        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm ${selectedPlacement?.isVerified ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
-                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z"/></svg>
-                           <span className="text-[10px] font-black uppercase tracking-widest">{selectedPlacement?.isVerified ? 'SYSTEM VERIFIED' : 'PENDING AUDIT'}</span>
-                        </div>
-                     </div>
+               </section>
 
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                        <div className="space-y-2">
-                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">X Identity</p>
-                           <p className="text-sm font-black text-jetblue dark:text-blue-400 flex items-center gap-2 italic">{selectedPlacement?.twitterHandle}</p>
-                        </div>
-                        <div className="space-y-2">
-                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Communication</p>
-                           <p className="text-sm font-black text-slate-700 dark:text-slate-300">{selectedPlacement?.creatorEmail}</p>
-                        </div>
-                        <div className="space-y-2">
-                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Marketplace Velocity</p>
-                           <p className="text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{selectedPlacement?.totalBuys}</p>
-                        </div>
-                     </div>
+               <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] italic mb-8">Verified Identity</h4>
+                  <div className="flex items-center gap-6 mb-10">
+                    <div className="w-20 h-20 bg-jetblue rounded-[1.5rem] flex items-center justify-center text-white text-3xl font-black shadow-xl">
+                       {selectedPlacement?.creator.charAt(0)}
+                    </div>
+                    <div>
+                       <h5 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{selectedPlacement?.creator}</h5>
+                       <div className={`mt-1 flex items-center gap-2 ${selectedPlacement?.isVerified ? 'text-blue-500' : 'text-red-400'}`}>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                          <span className="text-[8px] font-black uppercase tracking-widest">{selectedPlacement?.isVerified ? 'IDENTITY VERIFIED' : 'PENDING AUDIT'}</span>
+                       </div>
+                    </div>
                   </div>
-               </div>
-            </section>
+                  <div className="space-y-4">
+                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Creator X Authority</p>
+                     <p className="text-sm font-black text-slate-700 dark:text-slate-300 italic">{selectedPlacement?.twitterHandle}</p>
+                  </div>
+               </section>
+            </div>
 
           </div>
 
@@ -334,7 +295,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
             <button 
               disabled={isPurchasing || isSuccess}
               onClick={handleBuy}
-              className={`w-full sm:w-auto min-w-[300px] h-24 rounded-[2.5rem] font-black text-xl uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center justify-center gap-6 relative overflow-hidden ${
+              className={`w-full sm:w-auto min-w-[350px] h-24 rounded-[2.5rem] font-black text-xl uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center justify-center gap-6 relative overflow-hidden ${
                 isSuccess ? 'bg-green-500 text-white' : 
                 isPurchasing ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 
                 'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-2 active:scale-95'
@@ -370,82 +331,35 @@ const Marketplace: React.FC<MarketplaceProps> = ({ isLoggedIn, onAuthRequired })
             <button onClick={() => setIsFilterOpen(false)} className="p-2 text-slate-400 hover:text-jetblue"><svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg></button>
           </div>
           <div className="flex-1 overflow-y-auto p-10 space-y-12">
-            {/* Availability Window */}
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Broadcast Calendar</label>
               <div className="flex flex-wrap gap-2.5">
                 {days.map(day => (
-                  <button 
-                    key={day} 
-                    onClick={() => toggleFilter(selectedDays, day, setSelectedDays)} 
-                    className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedDays.includes(day) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}
-                  >
-                    {day}
-                  </button>
+                  <button key={day} onClick={() => toggleFilter(selectedDays, day, setSelectedDays)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedDays.includes(day) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{day}</button>
                 ))}
               </div>
             </div>
-
-            {/* Broadcast Time */}
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Scheduling Window</label>
               <div className="flex flex-wrap gap-2.5">
                 {times.map(t => (
-                  <button 
-                    key={t} 
-                    onClick={() => toggleFilter(selectedTimes, t, setSelectedTimes)} 
-                    className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedTimes.includes(t) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}
-                  >
-                    {t}
-                  </button>
+                  <button key={t} onClick={() => toggleFilter(selectedTimes, t, setSelectedTimes)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedTimes.includes(t) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{t}</button>
                 ))}
               </div>
             </div>
-
-            {/* Platforms */}
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Distribution Pipeline</label>
               <div className="flex flex-wrap gap-2.5">
                 {platformsList.map(p => (
-                  <button 
-                    key={p} 
-                    onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} 
-                    className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}
-                  >
-                    {p}
-                  </button>
+                  <button key={p} onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{p}</button>
                 ))}
               </div>
             </div>
-
-            {/* Genre */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Content Niche Segment</label>
-              <div className="grid grid-cols-2 gap-3">
-                {genres.map(g => (
-                  <button 
-                    key={g} 
-                    onClick={() => setSelectedGenre(selectedGenre === g ? '' : g)} 
-                    className={`px-6 py-4 rounded-2xl text-[11px] font-black border-2 transition-all text-left ${selectedGenre === g ? 'bg-jetblue border-jetblue text-white shadow-xl scale-[1.02]' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Logo Position */}
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Visual Anchor Priority</label>
               <div className="grid grid-cols-3 gap-3">
                 {logoPositions.map(pos => (
-                  <button 
-                    key={pos} 
-                    onClick={() => setSelectedLogoPos(selectedLogoPos === pos ? '' : pos)} 
-                    className={`px-2 py-5 rounded-2xl text-[10px] font-black border-2 transition-all text-center leading-tight flex items-center justify-center ${selectedLogoPos === pos ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}
-                  >
-                    {pos}
-                  </button>
+                  <button key={pos} onClick={() => setSelectedLogoPos(selectedLogoPos === pos ? '' : pos)} className={`px-2 py-5 rounded-2xl text-[10px] font-black border-2 transition-all text-center leading-tight flex items-center justify-center ${selectedLogoPos === pos ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{pos}</button>
                 ))}
               </div>
             </div>
