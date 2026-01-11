@@ -7,9 +7,10 @@ interface NavbarProps {
   isLoggedIn?: boolean;
   userRole?: string | null;
   onProfileClick?: () => void;
+  twitterHandle?: string | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick, twitterHandle }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -72,7 +73,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
               className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg"
             >
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              My Profile
+              {twitterHandle ? (
+                <span className="flex items-center gap-2">
+                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                   {twitterHandle}
+                </span>
+              ) : 'My Profile'}
               <span className="text-[9px] bg-jetblue text-white px-1.5 py-0.5 rounded ml-1 opacity-70">{userRole}</span>
             </button>
           ) : (

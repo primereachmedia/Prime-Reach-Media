@@ -6,16 +6,17 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode: 'signin' | 'signup';
-  onLoginSuccess?: (email: string, role: string) => void;
+  onLoginSuccess?: (email: string, role: string, twitterHandle?: string) => void;
 }
 
-type AuthStep = 'initial' | 'verify_otp' | 'success';
+type AuthStep = 'initial' | 'verify_otp' | 'verify_twitter' | 'success';
 type UserPath = 'signin' | 'creator' | 'marketer' | null;
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
   const [step, setStep] = useState<AuthStep>('initial');
   const [path, setPath] = useState<UserPath>(null);
   const [email, setEmail] = useState('');
+  const [twitterHandle, setTwitterHandle] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentCode, setSentCode] = useState<string | null>(null);
@@ -28,6 +29,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
       setStep('initial');
       setPath(null);
       setEmail('');
+      setTwitterHandle(null);
       setIsLoading(false);
       setError(null);
       setSentCode(null);
@@ -36,6 +38,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleTwitterAuth = (selectedPath: UserPath) => {
+    setPath(selectedPath);
+    setIsLoading(true);
+    setStep('verify_twitter');
+    
+    // Simulate X OAuth Handshake
+    setTimeout(() => {
+      setTwitterHandle('@PRM_User_' + Math.floor(Math.random() * 9999));
+      setEmail('twitter-auth-' + Math.floor(Math.random() * 1000) + '@prm.io');
+      setIsLoading(false);
+      setStep('success');
+    }, 2500);
+  };
 
   const handleInitialSubmit = async (e: React.FormEvent, selectedPath: UserPath) => {
     e.preventDefault();
@@ -98,6 +114,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
       setIsLoading(false);
     }, 1200);
   };
+
+  const renderVerifyTwitter = () => (
+    <div className="flex flex-col items-center justify-center p-12 text-center animate-in fade-in zoom-in duration-500 min-h-[550px]">
+      <div className="relative mb-12">
+        <div className="absolute inset-0 bg-slate-900/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="relative w-28 h-28 bg-black rounded-3xl flex items-center justify-center shadow-2xl rotate-12 border-4 border-white/20">
+          <svg className="w-14 h-14 text-white animate-bounce" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+        </div>
+      </div>
+      <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic mb-2 tracking-tighter">X AUTHORIZATION</h3>
+      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase max-w-sm leading-relaxed mb-10">
+        INTERCEPTING SECURE HANDSHAKE FROM X.COM PORTAL...<br/>
+        <span className="text-jetblue font-black mt-1 block">PROTOCOL: OAUTH 2.0 PKCE</span>
+      </p>
+      <div className="w-64 h-2 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+        <div className="h-full bg-jetblue animate-[progress_2.5s_ease-in-out]"></div>
+      </div>
+      <style>{`
+        @keyframes progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `}</style>
+    </div>
+  );
 
   const renderVerifyOtp = () => (
     <div className="flex flex-col items-center justify-center p-12 text-center animate-in fade-in zoom-in duration-500 min-h-[550px]">
@@ -182,8 +225,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
       <p className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase max-w-sm leading-relaxed mb-8">
         Verification successful. Your session is now encrypted and secured by <span className="text-jetblue font-black">PRM HUB V2</span>.
       </p>
+      {twitterHandle && (
+        <div className="mb-10 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+           <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-white">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+           </div>
+           <div className="text-left">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Connected via X</p>
+              <p className="text-xs font-black dark:text-white">{twitterHandle}</p>
+           </div>
+        </div>
+      )}
       <button 
-        onClick={() => onLoginSuccess?.(email, path || 'marketer')}
+        onClick={() => onLoginSuccess?.(email, path || 'marketer', twitterHandle || undefined)}
         className="px-12 py-5 bg-[#001A41] text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-jetblue transition-all shadow-2xl hover:-translate-y-1"
       >
         Initialize Profile
@@ -195,7 +249,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose} />
       <div className="relative w-full max-w-7xl bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-white/10">
-        {step === 'success' ? renderSuccess() : step === 'verify_otp' ? renderVerifyOtp() : (
+        {step === 'success' ? renderSuccess() : step === 'verify_otp' ? renderVerifyOtp() : step === 'verify_twitter' ? renderVerifyTwitter() : (
           <div className="flex flex-col lg:flex-row min-h-[700px]">
             {/* SIGN IN */}
             <div className="flex-1 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
@@ -206,19 +260,35 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
                 <div className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest mb-4">EXISTING USERS</div>
                 <h3 className="text-5xl font-black text-slate-900 dark:text-white uppercase italic leading-[0.8] tracking-tighter">SIGN <br /> IN</h3>
               </div>
-              <form onSubmit={(e) => handleInitialSubmit(e, 'signin')} className="mt-auto space-y-4">
-                {error && path === 'signin' && <div className="p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight border border-red-500/20">{error}</div>}
-                <input 
-                  type="email" placeholder="ENTER EMAIL" required 
-                  value={path === 'signin' ? email : ''}
-                  onChange={(e) => { setPath('signin'); setEmail(e.target.value); }}
-                  className="w-full bg-slate-100 dark:bg-slate-800 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-2 border-transparent focus:border-jetblue/30 dark:text-white transition-all shadow-sm" 
-                />
-                <button type="submit" disabled={isLoading} className="w-full bg-slate-900 dark:bg-slate-800 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-black transition-all shadow-xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
-                  {isLoading && path === 'signin' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'AUTHENTICATE'}
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={() => handleTwitterAuth('signin')}
+                  className="w-full bg-black text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-900 transition-all flex items-center justify-center gap-3 shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Sign in with X
                 </button>
-              </form>
+                <div className="flex items-center gap-4 text-[10px] font-black text-slate-300 uppercase py-2">
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
+                  OR USE EMAIL
+                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
+                </div>
+                <form onSubmit={(e) => handleInitialSubmit(e, 'signin')} className="space-y-4">
+                  {error && path === 'signin' && <div className="p-3 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight border border-red-500/20">{error}</div>}
+                  <input 
+                    type="email" placeholder="ENTER EMAIL" required 
+                    value={path === 'signin' ? email : ''}
+                    onChange={(e) => { setPath('signin'); setEmail(e.target.value); }}
+                    className="w-full bg-slate-100 dark:bg-slate-800 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-2 border-transparent focus:border-jetblue/30 dark:text-white transition-all shadow-sm" 
+                  />
+                  <button type="submit" disabled={isLoading} className="w-full bg-slate-900 dark:bg-slate-800 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-black transition-all shadow-xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
+                    {isLoading && path === 'signin' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'AUTHENTICATE'}
+                  </button>
+                </form>
+              </div>
             </div>
+
             {/* CREATOR */}
             <div className="flex-1 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col bg-prmgold text-white group transition-all hover:bg-prmgold-dark">
               <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden mb-10 border border-white/10 bg-white/5 shadow-2xl">
@@ -228,19 +298,35 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/80 uppercase tracking-widest mb-4">NEW CREATORS</div>
                 <h3 className="text-5xl font-black uppercase italic leading-[0.8] tracking-tighter">CREATOR <br /> SIGN UP</h3>
               </div>
-              <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
-                {error && path === 'creator' && <div className="p-3 bg-black/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
-                <input 
-                  type="email" placeholder="ENTER EMAIL" required 
-                  value={path === 'creator' ? email : ''}
-                  onChange={(e) => { setPath('creator'); setEmail(e.target.value); }}
-                  className="w-full bg-white/10 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-none text-white placeholder:text-white/50 transition-all focus:bg-white/20" 
-                />
-                <button type="submit" disabled={isLoading} className="w-full bg-white text-prmgold py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
-                  {isLoading && path === 'creator' ? <div className="w-4 h-4 border-2 border-prmgold/30 border-t-prmgold rounded-full animate-spin" /> : 'START ONBOARDING'}
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={() => handleTwitterAuth('creator')}
+                  className="w-full bg-white/10 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 transition-all flex items-center justify-center gap-3 border border-white/20"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Connect with X
                 </button>
-              </form>
+                <div className="flex items-center gap-4 text-[8px] font-black text-white/30 uppercase py-2">
+                  <div className="h-px flex-1 bg-white/10"></div>
+                  OR
+                  <div className="h-px flex-1 bg-white/10"></div>
+                </div>
+                <form onSubmit={(e) => handleInitialSubmit(e, 'creator')} className="mt-auto space-y-4">
+                  {error && path === 'creator' && <div className="p-3 bg-black/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
+                  <input 
+                    type="email" placeholder="ENTER EMAIL" required 
+                    value={path === 'creator' ? email : ''}
+                    onChange={(e) => { setPath('creator'); setEmail(e.target.value); }}
+                    className="w-full bg-white/10 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-none text-white placeholder:text-white/50 transition-all focus:bg-white/20" 
+                  />
+                  <button type="submit" disabled={isLoading} className="w-full bg-white text-prmgold py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
+                    {isLoading && path === 'creator' ? <div className="w-4 h-4 border-2 border-prmgold/30 border-t-prmgold rounded-full animate-spin" /> : 'START ONBOARDING'}
+                  </button>
+                </form>
+              </div>
             </div>
+
             {/* MARKETER */}
             <div className="flex-1 p-8 md:p-12 flex flex-col bg-[#001A41] text-white group transition-all hover:bg-[#00255c]">
               <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden mb-10 border border-white/10 bg-white/5 shadow-2xl">
@@ -250,18 +336,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/70 uppercase tracking-widest mb-4">ENTERPRISE TEAMS</div>
                 <h3 className="text-5xl font-black uppercase italic leading-[0.8] tracking-tighter">MARKETER <br /> SIGN UP</h3>
               </div>
-              <form onSubmit={(e) => handleInitialSubmit(e, 'marketer')} className="mt-auto space-y-4">
-                {error && path === 'marketer' && <div className="p-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
-                <input 
-                  type="email" placeholder="BUSINESS EMAIL" required 
-                  value={path === 'marketer' ? email : ''}
-                  onChange={(e) => { setPath('marketer'); setEmail(e.target.value); }}
-                  className="w-full bg-white/10 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-none text-white placeholder:text-white/50 transition-all focus:bg-white/20" 
-                />
-                <button type="submit" disabled={isLoading} className="w-full bg-white text-[#001A41] py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
-                  {isLoading && path === 'marketer' ? <div className="w-4 h-4 border-2 border-[#001A41]/30 border-t-[#001A41] rounded-full animate-spin" /> : 'START TEAM PORTAL'}
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={() => handleTwitterAuth('marketer')}
+                  className="w-full bg-white/10 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 transition-all flex items-center justify-center gap-3 border border-white/20"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Connect with X
                 </button>
-              </form>
+                <div className="flex items-center gap-4 text-[8px] font-black text-white/30 uppercase py-2">
+                  <div className="h-px flex-1 bg-white/10"></div>
+                  OR
+                  <div className="h-px flex-1 bg-white/10"></div>
+                </div>
+                <form onSubmit={(e) => handleInitialSubmit(e, 'marketer')} className="mt-auto space-y-4">
+                  {error && path === 'marketer' && <div className="p-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl mb-4 leading-tight">{error}</div>}
+                  <input 
+                    type="email" placeholder="BUSINESS EMAIL" required 
+                    value={path === 'marketer' ? email : ''}
+                    onChange={(e) => { setPath('marketer'); setEmail(e.target.value); }}
+                    className="w-full bg-white/10 rounded-2xl px-8 py-5 text-[11px] font-black tracking-widest outline-none border-none text-white placeholder:text-white/50 transition-all focus:bg-white/20" 
+                  />
+                  <button type="submit" disabled={isLoading} className="w-full bg-white text-[#001A41] py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-slate-100 transition-all shadow-2xl group-hover:scale-[1.02] flex items-center justify-center gap-2">
+                    {isLoading && path === 'marketer' ? <div className="w-4 h-4 border-2 border-[#001A41]/30 border-t-[#001A41] rounded-full animate-spin" /> : 'START TEAM PORTAL'}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         )}

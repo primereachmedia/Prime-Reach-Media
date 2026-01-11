@@ -5,12 +5,13 @@ interface ProfileBuilderProps {
   userRole: string;
   userEmail: string;
   initialWalletAddress?: string | null;
+  initialTwitterHandle?: string | null;
   onSave: (data: any) => void;
 }
 
-const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, onSave }) => {
+const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, initialTwitterHandle, onSave }) => {
   const [formData, setFormData] = useState({
-    companyName: '',
+    companyName: initialTwitterHandle || '',
     mission: '',
     companyType: '',
     timeInBusiness: '',
@@ -146,19 +147,21 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  Authenticated Email 
+                  Authenticated Identifier 
                   <svg className="w-3 h-3 text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </label>
                 <div className="relative">
                    <input 
-                    type="email" 
-                    value={userEmail}
+                    type="text" 
+                    value={initialTwitterHandle || userEmail}
                     disabled
                     className="w-full bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-6 py-4 text-xs font-bold text-slate-400 cursor-not-allowed opacity-80"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-jetblue uppercase tracking-tighter">Verified</div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-jetblue uppercase tracking-tighter">
+                    {initialTwitterHandle ? 'X Verified' : 'Email Verified'}
+                  </div>
                 </div>
               </div>
               <div>
@@ -198,7 +201,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       {!formData.walletAddress && <span className="text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded tracking-tighter">OPTIONAL NOW</span>}
                     </h4>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight max-w-sm leading-relaxed italic">
-                      You don't have to connect your wallet now, but you must connect before any purchase or automated payout.
+                      You don't have to connect your wallet now, but you must connect before any purchase.
                     </p>
                   </div>
                 </div>

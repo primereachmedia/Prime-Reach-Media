@@ -13,6 +13,7 @@ interface UserState {
   role: 'signin' | 'creator' | 'marketer' | null;
   hasProfile: boolean;
   walletAddress: string | null;
+  twitterHandle: string | null;
 }
 
 const App: React.FC = () => {
@@ -22,7 +23,8 @@ const App: React.FC = () => {
     email: null,
     role: null,
     hasProfile: false,
-    walletAddress: null
+    walletAddress: null,
+    twitterHandle: null
   });
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
     isOpen: false,
@@ -37,13 +39,14 @@ const App: React.FC = () => {
     setAuthModal({ isOpen: true, mode });
   };
 
-  const handleLoginSuccess = (email: string, role: string) => {
+  const handleLoginSuccess = (email: string, role: string, twitterHandle?: string) => {
     setUser(prev => ({
       ...prev,
       isLoggedIn: true,
       email,
       role: role as any,
-      hasProfile: false
+      hasProfile: false,
+      twitterHandle: twitterHandle || null
     }));
     setAuthModal(prev => ({ ...prev, isOpen: false }));
     setView('profile');
@@ -67,6 +70,7 @@ const App: React.FC = () => {
         isLoggedIn={user.isLoggedIn}
         userRole={user.role}
         onProfileClick={navigateToProfile}
+        twitterHandle={user.twitterHandle}
       />
       
       <main className="flex-grow">
@@ -75,6 +79,7 @@ const App: React.FC = () => {
             userRole={user.role || 'marketer'} 
             userEmail={user.email || ''}
             initialWalletAddress={user.walletAddress}
+            initialTwitterHandle={user.twitterHandle}
             onSave={handleProfileSave} 
           />
         ) : view === 'landing' ? (
