@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 interface ProfileBuilderProps {
   userRole: string;
   userEmail: string;
+  initialWalletAddress?: string | null;
   onSave: (data: any) => void;
 }
 
-const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, onSave }) => {
+const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, initialWalletAddress, onSave }) => {
   const [formData, setFormData] = useState({
     companyName: '',
     mission: '',
@@ -17,27 +18,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
     primaryObjective: '',
     audienceDescription: '',
     image: null as string | null,
-    walletAddress: null as string | null
+    walletAddress: initialWalletAddress || null as string | null
   });
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [phantomError, setPhantomError] = useState<string | null>(null);
-
-  // Check if wallet is already connected on mount
-  useEffect(() => {
-    const checkConnection = async () => {
-      const { solana } = window as any;
-      if (solana?.isPhantom) {
-        try {
-          const response = await solana.connect({ onlyIfTrusted: true });
-          setFormData(prev => ({ ...prev, walletAddress: response.publicKey.toString() }));
-        } catch (err) {
-          // User has not trusted the site yet, that's fine.
-        }
-      }
-    };
-    checkConnection();
-  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +39,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
     const { solana } = window as any;
     
     if (!solana?.isPhantom) {
-      setPhantomError('PHANTOM WALLET NOT DETECTED. PLEASE INSTALL THE EXTENSION.');
+      setPhantomError('PROVIDER WALLET NOT DETECTED. PLEASE INSTALL A COMPATIBLE EXTENSION.');
       window.open('https://phantom.app/', '_blank');
       return;
     }
@@ -66,12 +51,24 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
       const response = await solana.connect();
       const publicKey = response.publicKey.toString();
       setFormData(prev => ({ ...prev, walletAddress: publicKey }));
-      console.log('[Wallet] Connected:', publicKey);
     } catch (err: any) {
-      console.error('[Wallet] Connection failed:', err);
       setPhantomError(err.message || 'CONNECTION REJECTED BY USER');
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnectWallet = async () => {
+    const { solana } = window as any;
+    if (solana) {
+      try {
+        await solana.disconnect();
+        setFormData(prev => ({ ...prev, walletAddress: null }));
+      } catch (err) {
+        console.error('[Wallet] Disconnect failed:', err);
+      }
+    } else {
+      setFormData(prev => ({ ...prev, walletAddress: null }));
     }
   };
 
@@ -89,14 +86,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-black text-jetblue dark:text-white uppercase italic tracking-tighter">PROFILE STUDIO</h1>
-          <p className="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase mt-2">CONFIGURING IDENTITY FOR: <span className="text-prmgold">{userRole}</span></p>
+          <div className="flex items-center gap-4 mb-2">
+             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+             <span className="text-[10px] font-black text-jetblue dark:text-jetblue-light uppercase tracking-[0.5em]">PRM Studio v2.0</span>
+             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter text-center">PROFILE STUDIO</h1>
+          <p className="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase mt-4 text-center">CONFIGURING IDENTITY FOR: <span className="text-prmgold">{userRole}</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-12 pb-24">
           
-          {/* IMAGE BRANDING SECTION - 1024x1024 UI */}
-          <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
+          <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800 transition-all hover:shadow-2xl hover:shadow-jetblue/10">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">01</span>
               Stream Branding Asset
@@ -118,7 +119,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
                   <div className="relative w-full h-full">
                     <img src={formData.image} className="w-full h-full object-cover" alt="Branding" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                      <span className="text-white font-black text-xs uppercase tracking-widest border-2 border-white px-4 py-2">Change Asset</span>
+                      <span className="text-white font-black text-xs uppercase tracking-widest border-2 border-white px-4 py-2 hover:bg-white hover:text-black transition-colors">Change Asset</span>
                     </div>
                   </div>
                 ) : (
@@ -136,7 +137,6 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
             </div>
           </section>
 
-          {/* IDENTITY & WALLET SECTION */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">02</span>
@@ -184,39 +184,37 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
               />
             </div>
 
-            {/* REAL PHANTOM WALLET INTEGRATION */}
-            <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all ${formData.walletAddress ? 'bg-green-500/5 border-green-500/20' : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800'} mb-10`}>
+            <div className={`p-8 rounded-[2rem] border-2 border-dashed transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/30' : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800'} mb-10`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-md">
-                    <img src="https://res.cloudinary.com/dc6u9s76p/image/upload/v1645001309/phantom-logo_d6lqjy.png" className="w-8 h-8 object-contain" alt="Phantom" />
+                  <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800">
+                    <svg className="w-8 h-8 text-jetblue dark:text-jetblue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                      Phantom Wallet Integration
+                      Secured Wallet Integration
+                      {!formData.walletAddress && <span className="text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded tracking-tighter">OPTIONAL NOW</span>}
                     </h4>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight max-w-sm">
-                      Security protocol: Only use the official Phantom extension. Required for executing trades and automated payouts in USDC.
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight max-w-sm leading-relaxed italic">
+                      You don't have to connect your wallet now, but you must connect before any purchase or automated payout.
                     </p>
                   </div>
                 </div>
 
                 {formData.walletAddress ? (
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="px-6 py-3 bg-white dark:bg-slate-900 border border-green-500/30 text-green-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-lg">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <div className="flex flex-col items-end gap-3">
+                    <div className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/30 text-green-500 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl">
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-500/50"></div>
                       SECURED: {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </div>
                     <button 
                       type="button" 
-                      onClick={async () => {
-                        const { solana } = window as any;
-                        await solana?.disconnect();
-                        setFormData(prev => ({ ...prev, walletAddress: null }));
-                      }}
-                      className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors"
+                      onClick={handleDisconnectWallet}
+                      className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-all hover:tracking-[0.3em]"
                     >
-                      Disconnect Wallet
+                      [ Terminate Connection ]
                     </button>
                   </div>
                 ) : (
@@ -225,16 +223,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
                       type="button"
                       onClick={handleConnectWallet}
                       disabled={isConnecting}
-                      className="px-10 py-4 bg-[#AB9FF2] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+                      className="px-10 py-5 bg-jetblue text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-jetblue/20 flex items-center gap-3 group"
                     >
                       {isConnecting ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 16h-2v-2h2v2zm0-4h-2v-4h2v4zm4 4h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                        <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
                       )}
-                      {isConnecting ? 'ESTABLISHING...' : 'Connect Phantom'}
+                      {isConnecting ? 'ESTABLISHING HANDSHAKE...' : 'Link Provider Wallet'}
                     </button>
-                    {phantomError && <p className="text-[8px] font-black text-red-500 text-center max-w-[180px] leading-tight tracking-widest">{phantomError}</p>}
+                    {phantomError && <p className="text-[9px] font-black text-red-500 text-center max-w-[220px] leading-tight tracking-widest animate-bounce uppercase">{phantomError}</p>}
                   </div>
                 )}
               </div>
@@ -291,7 +291,6 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
             </div>
           </section>
 
-          {/* STRATEGIC BLUEPRINT SECTION */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-jetblue/5 border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">03</span>
@@ -307,7 +306,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
                       key={obj}
                       type="button"
                       onClick={() => setFormData(prev => ({...prev, primaryObjective: obj}))}
-                      className={`px-4 py-4 rounded-xl text-[9px] font-black uppercase text-center tracking-tight leading-tight transition-all border-2 ${formData.primaryObjective === obj ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500'}`}
+                      className={`px-4 py-4 rounded-xl text-[9px] font-black uppercase text-center tracking-tight leading-tight transition-all border-2 ${formData.primaryObjective === obj ? 'bg-jetblue border-jetblue text-white shadow-xl scale-105' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 hover:border-jetblue/30'}`}
                     >
                       {obj}
                     </button>
@@ -322,7 +321,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
                   value={formData.audienceDescription}
                   onChange={(e) => setFormData(prev => ({...prev, audienceDescription: e.target.value}))}
                   placeholder="DESCRIBE THE DEMOGRAPHICS, PSYCHOGRAPHICS, AND NICHE SEGMENTS YOU ARE TARGETING..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl px-8 py-6 text-xs font-bold dark:text-white focus:border-jetblue outline-none transition-all resize-none shadow-inner"
                 />
               </div>
             </div>
@@ -330,16 +329,19 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, on
 
           <div className="flex flex-col md:flex-row justify-end gap-6 items-center border-t border-slate-100 dark:border-slate-800 pt-12">
             <div className="text-right">
-              <p className="text-[9px] font-black text-jetblue uppercase tracking-widest mb-1">DATA INTEGRITY CHECK</p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase max-w-[280px] leading-tight">
-                Profile finalization will lock your business entity and wallet address to the Prime Reach Media smart contracts.
+              <p className="text-[9px] font-black text-jetblue uppercase tracking-[0.3em] mb-1">DATA INTEGRITY PROTOCOL</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase max-w-[320px] leading-tight tracking-tight">
+                Profile deployment will lock your entity profile to the PRM decentralized marketplace registry. Wallet connectivity can be finalized later.
               </p>
             </div>
             <button 
               type="submit"
-              className="w-full md:w-auto px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95 border-b-4 border-jetblue-dark"
+              className="w-full md:w-auto px-16 py-6 bg-jetblue text-white rounded-2xl font-black text-sm uppercase tracking-[0.4em] hover:bg-jetblue-bright transition-all shadow-2xl hover:-translate-y-1 active:scale-95 border-b-4 border-jetblue-dark flex items-center justify-center gap-3"
             >
               Lock & Deploy Profile
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </button>
           </div>
 

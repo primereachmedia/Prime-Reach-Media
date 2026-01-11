@@ -51,7 +51,11 @@ const App: React.FC = () => {
 
   const handleProfileSave = (data: any) => {
     console.log('Profile Saved:', data);
-    setUser(prev => ({ ...prev, hasProfile: true }));
+    setUser(prev => ({ 
+      ...prev, 
+      hasProfile: true,
+      walletAddress: data.walletAddress 
+    }));
     setView('marketplace');
   };
 
@@ -70,6 +74,7 @@ const App: React.FC = () => {
           <ProfileBuilder 
             userRole={user.role || 'marketer'} 
             userEmail={user.email || ''}
+            initialWalletAddress={user.walletAddress}
             onSave={handleProfileSave} 
           />
         ) : view === 'landing' ? (
