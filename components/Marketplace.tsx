@@ -5,7 +5,7 @@ interface CardProps {
   id: string;
   image: string;
   title: string;
-  date: string;
+  date: string; // This now holds the formatted EST date from the normalize sync
   day: string;
   time: string;
   platforms: string[];
@@ -242,8 +242,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Stream Reach Parameters</h4>
                   <div className="space-y-6">
                     <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Concurrent Viewers (CCV)</span>
-                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic">{selectedPlacement?.viewers || 'N/A'}</span>
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Broadcast Window (EST)</span>
+                       <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">{selectedPlacement?.date}</span>
                     </div>
                     <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Content Niche</span>
@@ -275,8 +275,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                     </div>
                   </div>
                   <div className="space-y-4">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Creator X Authority</p>
-                     <p className="text-sm font-black text-slate-700 dark:text-slate-300 italic">{selectedPlacement?.twitterHandle}</p>
+                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Viewers (CCV)</p>
+                     <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic">{selectedPlacement?.viewers || 'N/A'}</p>
                   </div>
                </section>
             </div>
@@ -301,72 +301,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                 'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-2 active:scale-95'
               }`}
             >
-               {isSuccess ? (
-                 <div className="flex items-center gap-4 animate-in zoom-in duration-300">
-                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path d="M5 13l4 4L19 7"/></svg>
-                   SLOT RESERVED
-                 </div>
-               ) : isPurchasing ? (
-                 <div className="flex items-center gap-4">
-                   <div className="w-6 h-6 border-4 border-slate-300 border-t-jetblue rounded-full animate-spin"></div>
-                   EXECUTING
-                 </div>
-               ) : (
-                 <>
-                   LOCK IN SLOT
-                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                 </>
-               )}
+               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING' : 'LOCK IN SLOT'}
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* FILTER DRAWER */}
-      <div className={`fixed inset-0 z-[60] transition-opacity duration-500 ${isFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsFilterOpen(false)} />
-        <div className={`absolute top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-700 transform ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
-          <div className="p-10 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">TARGETING STACK</h2>
-            <button onClick={() => setIsFilterOpen(false)} className="p-2 text-slate-400 hover:text-jetblue"><svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg></button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-10 space-y-12">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Broadcast Calendar</label>
-              <div className="flex flex-wrap gap-2.5">
-                {days.map(day => (
-                  <button key={day} onClick={() => toggleFilter(selectedDays, day, setSelectedDays)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedDays.includes(day) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{day}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Scheduling Window</label>
-              <div className="flex flex-wrap gap-2.5">
-                {times.map(t => (
-                  <button key={t} onClick={() => toggleFilter(selectedTimes, t, setSelectedTimes)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedTimes.includes(t) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{t}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Distribution Pipeline</label>
-              <div className="flex flex-wrap gap-2.5">
-                {platformsList.map(p => (
-                  <button key={p} onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} className={`px-6 py-3 rounded-2xl text-[11px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{p}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 italic">Visual Anchor Priority</label>
-              <div className="grid grid-cols-3 gap-3">
-                {logoPositions.map(pos => (
-                  <button key={pos} onClick={() => setSelectedLogoPos(selectedLogoPos === pos ? '' : pos)} className={`px-2 py-5 rounded-2xl text-[10px] font-black border-2 transition-all text-center leading-tight flex items-center justify-center ${selectedLogoPos === pos ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-jetblue/30'}`}>{pos}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="p-10 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 flex gap-6">
-            <button onClick={resetFilters} className="flex-1 px-8 py-5 rounded-2xl text-[10px] font-black text-slate-500 border-2 border-slate-200 dark:border-slate-800 uppercase tracking-[0.3em] hover:border-red-500 transition-colors">Clear Stack</button>
-            <button onClick={() => setIsFilterOpen(false)} className="flex-[2] px-8 py-5 rounded-2xl text-[10px] font-black text-white bg-jetblue uppercase tracking-[0.5em] shadow-2xl shadow-jetblue/30 hover:bg-jetblue-bright active:scale-95 transition-all">Apply Parameters</button>
           </div>
         </div>
       </div>
