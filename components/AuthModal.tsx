@@ -140,7 +140,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {/* 1. SIGN IN TRACK */}
             <div className="flex-1 p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
-                <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800" alt="Sign In Access" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
+                <img 
+                  src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=60&w=600" 
+                  alt="Sign In Access" 
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" 
+                  loading="eager"
+                />
               </div>
               <div className="mb-6">
                 <div className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest mb-4">EXISTING USERS</div>
@@ -170,7 +175,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {/* 2. CREATOR TRACK */}
             <div className="flex-1 p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex flex-col bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 group hover:to-slate-100 dark:hover:to-slate-800 transition-colors">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-sm">
-                <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800" alt="Creator Registration" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
+                <img 
+                  src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=60&w=600" 
+                  alt="Creator Registration" 
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" 
+                  loading="eager"
+                />
               </div>
               <div className="mb-6">
                 <div className="inline-block px-3 py-1 bg-jetblue/10 rounded-full text-[8px] font-black text-jetblue uppercase tracking-widest mb-4">NEW CREATORS</div>
@@ -200,7 +210,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {/* 3. MARKETER TRACK */}
             <div className="flex-1 p-8 md:p-10 flex flex-col bg-[#001A41] text-white group transition-all hover:bg-[#00255c]">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-8 border border-white/10 bg-white/5">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800" alt="Marketer Sign Up" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity grayscale group-hover:grayscale-0" />
+                <img 
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=60&w=600" 
+                  alt="Marketer Sign Up" 
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity grayscale group-hover:grayscale-0" 
+                  loading="eager"
+                />
               </div>
               <div className="mb-6">
                 <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black text-white/70 uppercase tracking-widest mb-4">ENTERPRISE TEAMS</div>
