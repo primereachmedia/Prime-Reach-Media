@@ -30,20 +30,16 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     otherPlatformDetail: ''
   });
 
-  // Verification Logic States
-  const [verificationStage, setVerificationStage] = useState<'idle' | 'handshake' | 'audit' | 'scanning' | 'success'>('idle');
-  const [verificationToken, setVerificationToken] = useState('');
-  const [evidenceImage, setEvidenceImage] = useState<string | null>(null);
-  const [scanLogs, setScanLogs] = useState<string[]>([]);
-  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  // X OAuth States
+  const [isXModalOpen, setIsXModalOpen] = useState(false);
+  const [isXConnecting, setIsXConnecting] = useState(false);
+  const [xLoginStep, setXLoginStep] = useState<'prompt' | 'login' | 'authorize' | 'callback'>('prompt');
+  const [tempXHandle, setTempXHandle] = useState('');
+
   const [isTerminating, setIsTerminating] = useState(false);
 
   const platforms = ['YOUTUBE', 'X', 'TIKTOK', 'FACEBOOK', 'INSTAGRAM', 'TWITCH', 'KICK', 'PUMPFUN', 'ZORA', 'RUMBLE', 'DISCORD', 'OTHER'];
   const industries = ['Crypto/Web3', 'Gaming', 'E-commerce', 'SaaS', 'Entertainment', 'FinTech', 'Lifestyle'];
-
-  useEffect(() => {
-    if (isTwitterVerified) setVerificationStage('success');
-  }, [isTwitterVerified]);
 
   const togglePlatform = (platform: string) => {
     setFormData(prev => {
@@ -53,99 +49,34 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     });
   };
 
-  const generateSecureHandshake = () => {
-    if (!formData.twitterHandle) {
-      alert("X HANDLE REQUIRED: Please enter your handle first.");
-      return;
-    }
-    const handle = formData.twitterHandle.replace('@', '').toUpperCase();
-    const bindingRef = formData.walletAddress 
-      ? formData.walletAddress.slice(-4).toUpperCase() 
-      : Math.random().toString(36).substring(2, 6).toUpperCase();
+  // Simulated OAuth Flow
+  const startXAuth = () => {
+    setIsXModalOpen(true);
+    setXLoginStep('prompt');
+  };
+
+  const proceedToLogin = () => setXLoginStep('login');
+  const proceedToAuthorize = () => {
+    if (!tempXHandle) return;
+    setXLoginStep('authorize');
+  };
+
+  const finalizeXAuth = () => {
+    setXLoginStep('callback');
+    setIsXConnecting(true);
     
-    const token = `PRM-${handle}-${bindingRef}-${Math.floor(1000 + Math.random() * 9000)}`;
-    setVerificationToken(token);
-    setVerificationStage('handshake');
-  };
-
-  const openXToPost = () => {
-    const text = encodeURIComponent(`Authenticating my authority for ${formData.twitterHandle} on @PrimeReachMedia.\n\nTOKEN: ${verificationToken}\n\n#PRM #VerifiedIdentity`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-  };
-
-  const handleEvidenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEvidenceImage(reader.result as string);
-        setVerificationStage('audit');
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const runAiForensicAudit = async () => {
-    if (!evidenceImage) return;
-
-    setVerificationStage('scanning');
-    setIsAiAnalyzing(true);
-    setScanLogs(["INITIALIZING AI FORENSIC AGENT...", "ESTABLISHING NEURAL LINK..."]);
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const base64Data = evidenceImage.split(',')[1];
-      
-      const prompt = `Perform a strict identity audit. 
-      1. Extract the X (Twitter) handle from the screenshot.
-      2. Extract the PRM token (format: PRM-HANDLE-REF-CODE).
-      3. Compare the handle found in the image with the expected handle: ${formData.twitterHandle}.
-      4. Compare the token found in the image with the expected token: ${verificationToken}.
-      5. Confirm if this is a real live tweet screenshot.
-      Respond ONLY with a JSON object: {"handleMatches": boolean, "tokenMatches": boolean, "isRealPost": boolean, "extractedHandle": "string", "reasoning": "string"}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          { inlineData: { mimeType: 'image/png', data: base64Data } },
-          { text: prompt }
-        ]
-      });
-
-      const auditResult = JSON.parse(response.text || '{}');
-      
-      const logSequence = [
-        `SCANNING HANDLE: Found ${auditResult.extractedHandle}`,
-        `CROSS-REFERENCING TOKEN: ${auditResult.tokenMatches ? 'MATCH CONFIRMED' : 'FAIL'}`,
-        `ANALYZING UI AUTHENTICITY: ${auditResult.isRealPost ? 'VALIDATED' : 'SPOOF DETECTED'}`,
-        auditResult.handleMatches && auditResult.tokenMatches && auditResult.isRealPost 
-          ? "IDENTITY ANCHOR SUCCESSFUL" 
-          : `AUDIT FAILED: ${auditResult.reasoning}`
-      ];
-
-      for (let i = 0; i < logSequence.length; i++) {
-        await new Promise(r => setTimeout(r, 600));
-        setScanLogs(prev => [...prev, logSequence[i]]);
-      }
-
-      if (auditResult.handleMatches && auditResult.tokenMatches && auditResult.isRealPost) {
-        setTimeout(() => {
-          setFormData(prev => ({ ...prev, isTwitterVerified: true }));
-          onUpdate({ twitterHandle: formData.twitterHandle, isTwitterVerified: true });
-          setVerificationStage('success');
-        }, 1000);
-      } else {
-        setTimeout(() => {
-          alert(`IDENTITY DISCREPANCY: ${auditResult.reasoning}`);
-          setVerificationStage('handshake');
-        }, 1500);
-      }
-    } catch (err) {
-      console.error(err);
-      setScanLogs(prev => [...prev, "ERROR: AI SUBSYSTEM OFFLINE."]);
-    } finally {
-      setIsAiAnalyzing(false);
-    }
+    // Simulate API Roundtrip
+    setTimeout(() => {
+      const finalHandle = tempXHandle.startsWith('@') ? tempXHandle : `@${tempXHandle}`;
+      setFormData(prev => ({
+        ...prev,
+        twitterHandle: finalHandle,
+        isTwitterVerified: true
+      }));
+      onUpdate({ twitterHandle: finalHandle, isTwitterVerified: true });
+      setIsXConnecting(false);
+      setIsXModalOpen(false);
+    }, 2000);
   };
 
   const handleConnectWallet = async () => {
@@ -172,7 +103,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.isTwitterVerified) {
-      alert("X Verification is mandatory for account security.");
+      alert("Identity verification via X is mandatory for security.");
       return;
     }
     if (userRole === 'creator' && !formData.walletAddress) {
@@ -241,7 +172,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             </div>
           </section>
 
-          {/* Section 2: Business/Creator Logic */}
+          {/* Section 2: Strategy/Reach Logic */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">02</span>
@@ -281,13 +212,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                 {formData.selectedPlatforms.includes('OTHER') && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Specify Platform(s)</label>
-                    <input 
-                      type="text" 
-                      value={formData.otherPlatformDetail} 
-                      onChange={(e) => setFormData(p => ({...p, otherPlatformDetail: e.target.value}))} 
-                      placeholder="Enter other channel names..." 
-                      className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue"
-                    />
+                    <input type="text" value={formData.otherPlatformDetail} onChange={(e) => setFormData(p => ({...p, otherPlatformDetail: e.target.value}))} placeholder="Enter other channel names..." className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue" />
                   </div>
                 )}
                 <div>
@@ -298,90 +223,65 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
             )}
           </section>
 
-          {/* Section 3: Verification & Wallet */}
+          {/* Section 3: Secure Connections */}
           <section className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-12">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-8 flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-jetblue flex items-center justify-center text-white text-xs">03</span>
               Security Protocol
             </h2>
 
-            {/* X AUTHORITY */}
-            <div className={`p-8 rounded-[2.5rem] border-2 border-dashed transition-all duration-300 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-inner'}`}>
-               <div className="flex flex-col items-center">
-                  {verificationStage === 'idle' && (
-                    <div className="w-full max-w-sm space-y-4 text-center">
-                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">BIND X ACCOUNT</h4>
-                       <input type="text" value={formData.twitterHandle} onChange={(e) => setFormData(p => ({...p, twitterHandle: e.target.value}))} placeholder="@YourHandle" className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-4 text-lg font-black dark:text-white outline-none focus:border-jetblue text-center" />
-                       <button type="button" onClick={generateSecureHandshake} className="w-full py-4 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all">Start Authority Scan</button>
-                    </div>
-                  )}
+            {/* X AUTHORITY VIA SIMULATED OAUTH */}
+            <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-300 ${formData.isTwitterVerified ? 'bg-blue-500/5 border-blue-500/20' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
+               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                     <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                     </div>
+                     <div className="text-left">
+                        <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">X Authority Channel</h4>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 italic">
+                          {formData.isTwitterVerified ? 'OAuth Identity Anchored' : 'Authentication Required'}
+                        </p>
+                     </div>
+                  </div>
 
-                  {verificationStage === 'handshake' && (
-                    <div className="w-full max-w-lg space-y-6 text-center">
-                       <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SECURE TOKEN</p>
-                          <p className="text-xl font-black text-jetblue dark:text-jetblue-light mb-6 select-all tracking-wider">{verificationToken}</p>
-                          <button type="button" onClick={openXToPost} className="w-full py-4 bg-black text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 mb-4">Post Handshake</button>
-                          <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
-                             <input type="file" id="ev" className="hidden" accept="image/*" onChange={handleEvidenceUpload} />
-                             <label htmlFor="ev" className="w-full flex items-center justify-center gap-3 py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black text-slate-400 uppercase cursor-pointer">Upload Post Screenshot</label>
-                          </div>
-                       </div>
+                  {formData.isTwitterVerified ? (
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-blue-500/20 text-blue-600 rounded-xl text-[11px] font-black tracking-widest uppercase">
+                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z"/></svg>
+                         {formData.twitterHandle}
+                      </div>
+                      <button type="button" onClick={() => setFormData(p => ({...p, isTwitterVerified: false, twitterHandle: ''}))} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect Account</button>
                     </div>
-                  )}
-
-                  {verificationStage === 'audit' && (
-                    <div className="w-full max-w-sm text-center space-y-4">
-                       <img src={evidenceImage!} className="w-full rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl" />
-                       <button type="button" onClick={runAiForensicAudit} className="w-full py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl">Execute Forensic Audit</button>
-                    </div>
-                  )}
-
-                  {verificationStage === 'scanning' && (
-                    <div className="w-full max-w-md p-8 bg-slate-900 rounded-[2rem] text-left border border-white/10 shadow-2xl">
-                       <div className="flex items-center gap-3 mb-6">
-                          <div className="w-6 h-6 border-2 border-jetblue-light border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">AI SCANNING TIMELINE...</span>
-                       </div>
-                       <div className="space-y-2 font-mono text-[10px] text-green-400">
-                          {scanLogs.map((log, i) => <div key={i} className="flex gap-2"><span>•</span><span className="uppercase">{log}</span></div>)}
-                       </div>
-                    </div>
-                  )}
-
-                  {verificationStage === 'success' && (
-                    <div className="text-center p-6 animate-in zoom-in duration-500">
-                       <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 12.5c0-1.58-.88-2.95-2.18-3.66.26-.55.43-1.16.43-1.81 0-2.32-1.88-4.2-4.2-4.2-.65 0-1.26.17-1.81.43C13.95 2.18 12.58 1.5 11 1.5c-1.58 0-2.95.88-3.66 2.18-.55-.26-1.16-.43-1.81-.43-2.32 0-4.2 1.88-4.2 4.2 0 .65.17 1.26.43 1.81C.5 9.95.5 11.32.5 12.9c0 1.58.88 2.95 2.18 3.66-.26.55-.43 1.16-.43 1.81 0 2.32 1.88 4.2 4.2 4.2.65 0 1.26-.17 1.81-.43 1.1 1.3 2.47 1.98 4.05 1.98 1.58 0 2.95-.88 3.66-2.18.55.26 1.16.43 1.81.43 2.32 0 4.2-1.88 4.2-4.2 0-.65-.17-1.26-.43-1.81 1.3-1.1 1.98-2.47 1.98-4.05zM10.29 16.71l-3.3-3.3c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l2.59 2.59 5.59-5.59c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-6.3 6.3c-.39.39-1.02.39-1.4 0z"/></svg>
-                       </div>
-                       <h4 className="text-2xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">{formData.twitterHandle}</h4>
-                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 mb-6 italic">SECURED VIA PRM FORENSIC V3</p>
-                       <button type="button" onClick={() => {setVerificationStage('idle'); setFormData(p => ({...p, isTwitterVerified: false})); onUpdate({isTwitterVerified: false});}} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">[ Revoke ]</button>
-                    </div>
+                  ) : (
+                    <button type="button" onClick={startXAuth} className="px-10 py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-black/10">Authorize with X</button>
                   )}
                </div>
             </div>
 
-            {/* PHANTOM WALLET - MANDATORY FOR CREATOR, OPTIONAL FOR MARKETER */}
-            <div className={`p-10 rounded-[2.5rem] border-2 border-dashed transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>
+            {/* WALLET SETTLEMENT */}
+            <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-300 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/20' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800'}`}>
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="text-left max-w-sm">
-                  <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                    SOLANA SETTLEMENT {userRole === 'marketer' && <span className="text-[10px] text-slate-400 ml-2">(OPTIONAL)</span>}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 italic leading-relaxed">
-                    {userRole === 'creator' ? 'Mandatory for instant payouts via Phantom.' : 'Link your wallet for easier marketplace checkout.'}
-                  </p>
+                <div className="flex items-center gap-6">
+                   <div className="w-16 h-16 bg-jetblue text-white rounded-2xl flex items-center justify-center shadow-lg">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                   </div>
+                   <div className="text-left">
+                      <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Settlement Layer {userRole === 'marketer' && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 italic">
+                        {userRole === 'creator' ? 'Mandatory for instant payouts' : 'Merchant checkout wallet'}
+                      </p>
+                   </div>
                 </div>
                 {formData.walletAddress ? (
                   <div className="flex flex-col items-end gap-2">
-                    <span className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/30 text-green-600 rounded-xl text-[11px] font-black tracking-widest uppercase">
+                    <span className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/20 text-green-600 rounded-xl text-[11px] font-black tracking-widest uppercase">
                       {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </span>
-                    <button type="button" onClick={() => setFormData(p => ({...p, walletAddress: null}))} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect</button>
+                    <button type="button" onClick={() => setFormData(p => ({...p, walletAddress: null}))} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect Wallet</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={handleConnectWallet} className="px-10 py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20">Link Phantom</button>
+                  <button type="button" onClick={handleConnectWallet} className="px-10 py-5 bg-jetblue text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/10">Link Phantom</button>
                 )}
               </div>
             </div>
@@ -395,6 +295,100 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           </div>
         </form>
       </div>
+
+      {/* SIMULATED X OAUTH MODAL */}
+      {isXModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => !isXConnecting && setIsXModalOpen(false)} />
+           <div className="relative w-full max-w-lg bg-white dark:bg-slate-950 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-white/10 flex flex-col">
+              
+              {/* Fake Browser Header */}
+              <div className="bg-slate-100 dark:bg-slate-900 p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                 <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                 </div>
+                 <div className="bg-white dark:bg-slate-950 px-6 py-1 rounded-full text-[9px] font-bold text-slate-400 tracking-tighter shadow-inner">api.twitter.com/oauth/authorize</div>
+                 <div className="w-6" />
+              </div>
+
+              {/* X Branding Banner */}
+              <div className="p-10 flex flex-col items-center text-center">
+                 <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center mb-8 shadow-xl">
+                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                 </div>
+
+                 {xLoginStep === 'prompt' && (
+                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 uppercase">Authorize Prime Reach</h3>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest leading-relaxed mb-10">Sign in to your X account to verify your identity and connect your audience data.</p>
+                      <button onClick={proceedToLogin} className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-all">Sign in with X</button>
+                   </div>
+                 )}
+
+                 {xLoginStep === 'login' && (
+                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full text-left">
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter mb-6 uppercase text-center">Enter Handle</h3>
+                      <div className="space-y-4">
+                         <input 
+                            type="text" 
+                            autoFocus
+                            value={tempXHandle} 
+                            onChange={(e) => setTempXHandle(e.target.value)} 
+                            placeholder="@YourHandle" 
+                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-5 text-lg font-black text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                         />
+                         <button onClick={proceedToAuthorize} className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl">Next</button>
+                      </div>
+                   </div>
+                 )}
+
+                 {xLoginStep === 'authorize' && (
+                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+                      <div className="mb-8 flex flex-col items-center">
+                         <div className="w-12 h-12 bg-jetblue text-white rounded-xl flex items-center justify-center mb-3">
+                            <span className="font-black text-xs">PRM</span>
+                         </div>
+                         <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">Prime Reach Media</h3>
+                         <p className="text-[10px] text-slate-500 font-bold">Wants to access your account</p>
+                      </div>
+                      
+                      <div className="text-left bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 mb-10 space-y-3">
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">This app will be able to:</p>
+                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21 7L9 19L3.5 13.5L4.91 12.09L9 16.17L19.59 5.58L21 7Z"/></svg>
+                            Read Tweets from your timeline
+                         </div>
+                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21 7L9 19L3.5 13.5L4.91 12.09L9 16.17L19.59 5.58L21 7Z"/></svg>
+                            See who you follow
+                         </div>
+                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21 7L9 19L3.5 13.5L4.91 12.09L9 16.17L19.59 5.58L21 7Z"/></svg>
+                            Verify your account ownership
+                         </div>
+                      </div>
+
+                      <div className="flex flex-col gap-4">
+                         <button onClick={finalizeXAuth} className="w-full py-5 bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 hover:bg-blue-600 transition-all">Authorize App</button>
+                         <button onClick={() => setIsXModalOpen(false)} className="w-full py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                      </div>
+                   </div>
+                 )}
+
+                 {xLoginStep === 'callback' && (
+                   <div className="animate-in fade-in duration-500 w-full flex flex-col items-center py-10">
+                      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase mb-2">Establishing Handshake</h3>
+                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] animate-pulse">Communicating with X API V2...</p>
+                   </div>
+                 )}
+              </div>
+
+           </div>
+        </div>
+      )}
     </div>
   );
 };
