@@ -38,7 +38,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
 
-  const platforms = ['YOUTUBE', 'X', 'TIKTOK', 'KICK', 'TWITCH', 'INSTAGRAM', 'PUMPFUN', 'ZORA', 'DISCORD', 'OTHER'];
+  const platforms = ['YOUTUBE', 'X', 'TIKTOK', 'FACEBOOK', 'INSTAGRAM', 'TWITCH', 'KICK', 'PUMPFUN', 'ZORA', 'RUMBLE', 'DISCORD', 'OTHER'];
   const industries = ['Crypto/Web3', 'Gaming', 'E-commerce', 'SaaS', 'Entertainment', 'FinTech', 'Lifestyle'];
 
   useEffect(() => {
@@ -59,7 +59,6 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       return;
     }
     const handle = formData.twitterHandle.replace('@', '').toUpperCase();
-    // For creators, bind to wallet. For marketers, bind to random salt if wallet is missing.
     const bindingRef = formData.walletAddress 
       ? formData.walletAddress.slice(-4).toUpperCase() 
       : Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -273,12 +272,24 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
               <div className="space-y-10">
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Distribution Matrix</label>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     {platforms.map(p => (
                       <button key={p} type="button" onClick={() => togglePlatform(p)} className={`p-4 rounded-xl font-black text-[10px] border-2 transition-all ${formData.selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}>{p}</button>
                     ))}
                   </div>
                 </div>
+                {formData.selectedPlatforms.includes('OTHER') && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Specify Platform(s)</label>
+                    <input 
+                      type="text" 
+                      value={formData.otherPlatformDetail} 
+                      onChange={(e) => setFormData(p => ({...p, otherPlatformDetail: e.target.value}))} 
+                      placeholder="Enter other channel names..." 
+                      className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold dark:text-white outline-none focus:border-jetblue"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Audience Demographics</label>
                   <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({...p, audienceDescription: e.target.value}))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[1.5rem] px-6 py-6 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none" placeholder="Describe your core viewers/segments..." />
