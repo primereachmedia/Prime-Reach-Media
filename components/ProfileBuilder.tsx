@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface ProfileBuilderProps {
   userRole: string;
@@ -23,6 +23,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   });
 
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStep, setConnectionStep] = useState<'idle' | 'connecting' | 'signing'>('idle');
   const [phantomError, setPhantomError] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,16 +47,32 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     }
 
     setIsConnecting(true);
+    setConnectionStep('connecting');
     setPhantomError(null);
 
     try {
+      // 1. Initial Connection Handshake
       const response = await solana.connect();
       const publicKey = response.publicKey.toString();
-      setFormData(prev => ({ ...prev, walletAddress: publicKey }));
+      
+      // 2. Mandatory Signature Handshake (Prevents Auto-Reconnect bypass)
+      setConnectionStep('signing');
+      const message = `AUTHENTICATE WITH PRIME REACH MEDIA\n\nUser: ${userEmail}\nTimestamp: ${Date.now()}\nStatus: Required Handshake`;
+      const encodedMessage = new TextEncoder().encode(message);
+      
+      try {
+        await solana.signMessage(encodedMessage, "utf8");
+        // Only set the wallet address if the signature is successful
+        setFormData(prev => ({ ...prev, walletAddress: publicKey }));
+      } catch (signErr: any) {
+        throw new Error('SIGNATURE REJECTED. MANUAL APPROVAL IS MANDATORY.');
+      }
+
     } catch (err: any) {
       setPhantomError(err.message || 'CONNECTION REJECTED BY USER');
     } finally {
       setIsConnecting(false);
+      setConnectionStep('idle');
     }
   };
 
@@ -67,6 +84,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         setFormData(prev => ({ ...prev, walletAddress: null }));
       } catch (err) {
         console.error('[Wallet] Disconnect failed:', err);
+        setFormData(prev => ({ ...prev, walletAddress: null }));
       }
     } else {
       setFormData(prev => ({ ...prev, walletAddress: null }));
@@ -198,10 +216,10 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   <div>
                     <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                       Secured Wallet Integration
-                      {!formData.walletAddress && <span className="text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded tracking-tighter">OPTIONAL NOW</span>}
+                      {!formData.walletAddress && <span className="text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded tracking-tighter">MANDATORY HANDSHAKE</span>}
                     </h4>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-tight max-w-sm leading-relaxed italic">
-                      You don't have to connect your wallet now, but you must connect before any purchase.
+                      Manual signature required for every connection. You don't have to connect your wallet now, but you must connect before any purchase.
                     </p>
                   </div>
                 </div>
@@ -210,14 +228,14 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   <div className="flex flex-col items-end gap-3">
                     <div className="px-6 py-3 bg-white dark:bg-slate-900 border-2 border-green-500/30 text-green-500 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl">
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-500/50"></div>
-                      SECURED: {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
+                      AUTHENTICATED: {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </div>
                     <button 
                       type="button" 
                       onClick={handleDisconnectWallet}
                       className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-all hover:tracking-[0.3em]"
                     >
-                      [ Terminate Connection ]
+                      [ Kill Session & Disconnect ]
                     </button>
                   </div>
                 ) : (
@@ -235,7 +253,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       )}
-                      {isConnecting ? 'ESTABLISHING HANDSHAKE...' : 'Link Provider Wallet'}
+                      {connectionStep === 'connecting' ? 'CONNECTING...' : connectionStep === 'signing' ? 'WAITING FOR SIGNATURE...' : 'Link Provider Wallet'}
                     </button>
                     {phantomError && <p className="text-[9px] font-black text-red-500 text-center max-w-[220px] leading-tight tracking-widest animate-bounce uppercase">{phantomError}</p>}
                   </div>
