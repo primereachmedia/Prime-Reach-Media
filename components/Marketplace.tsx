@@ -23,6 +23,8 @@ interface CardProps {
 interface MarketplaceProps {
   placements: CardProps[];
   isLoggedIn?: boolean;
+  walletAddress?: string | null;
+  onWalletConnect?: (address: string) => void;
   onAuthRequired?: () => void;
 }
 
@@ -69,14 +71,13 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
   </div>
 );
 
-const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAuthRequired }) => {
+const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walletAddress, onWalletConnect, onAuthRequired }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPlacement, setSelectedPlacement] = useState<CardProps | null>(null);
   const [status, setStatus] = useState<'active' | 'ended'>('active');
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
-  // Filter States
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -127,20 +128,55 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
     setSelectedLogoPos('');
   };
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!isLoggedIn) {
       onAuthRequired?.();
       return;
     }
+
+    const { solana } = window as any;
+    
+    // Step 1: Ensure Wallet Connection
+    if (!solana?.isPhantom) {
+      window.open('https://phantom.app/', '_blank');
+      return;
+    }
+
+    if (!walletAddress) {
+       try {
+         const resp = await solana.connect();
+         onWalletConnect?.(resp.publicKey.toString());
+       } catch (e) {
+         console.warn("Wallet Connection Rejected");
+         return;
+       }
+    }
+
+    // Step 2: Trigger Payment Request (Solana Transaction Signature)
     setIsPurchasing(true);
-    setTimeout(() => {
-      setIsPurchasing(false);
-      setIsSuccess(true);
+    try {
+      // Create a production-style handshake message for the transaction
+      const message = `PRM SETTLEMENT PROTOCOL (v1.0)\n\nTRANSACTION AUTHORIZATION\n\nSlot: ${selectedPlacement?.title}\nPrice: ${selectedPlacement?.price} USDC\nTimestamp: ${Date.now()}\n\nBy signing, you authorize the transfer of funds for this creator placement.`;
+      const encodedMessage = new TextEncoder().encode(message);
+      
+      // Request signature to simulate the "Ask to Pay" step
+      await solana.signMessage(encodedMessage, "utf8");
+
+      // Simulate the on-chain settlement delay
       setTimeout(() => {
-        setIsSuccess(false);
-        setSelectedPlacement(null);
-      }, 3000);
-    }, 2500);
+        setIsPurchasing(false);
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          setSelectedPlacement(null);
+        }, 3000);
+      }, 2000);
+
+    } catch (err: any) {
+      console.error("Settlement Failed:", err);
+      setIsPurchasing(false);
+      alert("Settlement Canceled: The transaction was rejected by your wallet.");
+    }
   };
 
   const getPlacementClasses = (pos: string) => {
@@ -219,7 +255,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
            </div>
            
            <div className="flex-1 overflow-y-auto p-8 space-y-10">
-              {/* Temporal Selection */}
               <div className="space-y-6">
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Days)</h4>
                  <div className="flex flex-wrap gap-2">
@@ -229,7 +264,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                  </div>
               </div>
 
-              {/* Day Part Selection */}
               <div className="space-y-6">
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Day-Part)</h4>
                  <div className="flex flex-wrap gap-2">
@@ -239,7 +273,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                  </div>
               </div>
 
-              {/* Platform Distribution */}
               <div className="space-y-6">
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Distribution Pipelines</h4>
                  <div className="flex flex-wrap gap-2">
@@ -249,7 +282,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                  </div>
               </div>
 
-              {/* Vertical / Genre */}
               <div className="space-y-6">
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Industry Verticals</h4>
                  <div className="grid grid-cols-2 gap-2">
@@ -259,7 +291,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                  </div>
               </div>
 
-              {/* Logo Anchor */}
               <div className="space-y-6">
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Precision Anchor Point</h4>
                  <div className="grid grid-cols-2 gap-2">
@@ -296,7 +327,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
             <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group bg-slate-950">
                <img src={selectedPlacement?.image} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-all duration-700" />
                
-               {/* PRECISE LOGO ANCHOR PREVIEW */}
                <div className={`absolute p-5 bg-jetblue text-white rounded-xl text-[9px] font-black shadow-2xl z-10 uppercase border border-white/20 backdrop-blur-md animate-pulse ${selectedPlacement ? getPlacementClasses(selectedPlacement.logoPlacement) : ''}`}>
                   SPONSOR LOGO
                   <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-prmgold rounded-full border-2 border-white"></div>
@@ -368,7 +398,13 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                 'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
               }`}
             >
-               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING' : 'LOCK IN SLOT'}
+               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'SETTLING ON SOLANA...' : 'LOCK IN SLOT'}
+               {isPurchasing && (
+                  <div className="absolute inset-0 bg-jetblue flex items-center justify-center gap-3">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span className="text-xs uppercase tracking-widest">Authorizing Payment</span>
+                  </div>
+               )}
             </button>
           </div>
         </div>

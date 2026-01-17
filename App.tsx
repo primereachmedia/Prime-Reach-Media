@@ -141,7 +141,7 @@ const App: React.FC = () => {
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
       twitterHandle: user.twitterHandle || "",
-      isVerified: true, // Verification concept removed, all users trusted for MVP
+      isVerified: true, 
       totalBuys: 0,
       viewers: data.viewers
     };
@@ -206,6 +206,8 @@ const App: React.FC = () => {
           <Marketplace 
             placements={placements}
             isLoggedIn={user.isLoggedIn}
+            walletAddress={user.walletAddress}
+            onWalletConnect={(address) => setUser(prev => ({ ...prev, walletAddress: address }))}
             onAuthRequired={() => setAuthModal({ isOpen: true, mode: 'signin' })}
           />
         ) : view === 'how_it_works' ? (

@@ -21,7 +21,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     image: null as string | null,
     walletAddress: initialWalletAddress || null as string | null,
     twitterHandle: initialTwitterHandle || '',
-    isWalletSigned: false, // PRODUCTION: Must be false on every mount for re-verification
+    isWalletSigned: false, 
     selectedPlatforms: [] as string[]
   });
 
@@ -29,10 +29,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const [isSigningWallet, setIsSigningWallet] = useState(false);
   const isCreator = userRole === 'creator';
 
+  const getProvider = () => {
+    if ("solana" in window) {
+      const provider = (window as any).solana;
+      if (provider.isPhantom) return provider;
+    }
+    return null;
+  };
+
   const handleConnectWallet = async () => {
-    const { solana } = window as any;
+    const provider = getProvider();
     
-    if (!solana?.isPhantom) {
+    if (!provider) {
       window.open('https://phantom.app/', '_blank');
       return;
     }
@@ -40,15 +48,14 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     setIsSigningWallet(true);
     try {
       // Step 1: Request connection to Phantom
-      const resp = await solana.connect();
+      const resp = await provider.connect();
       const publicKey = resp.publicKey.toString();
       
       // Step 2: Request message signature to verify identity
-      // Message hardened for production legal/technical compliance
       const message = `PRM PRODUCTION PROTOCOL (v1.0)\n\nSECURE IDENTITY HANDSHAKE\n\nEntity: ${userEmail}\nWallet: ${publicKey}\nTimestamp: ${Date.now()}\n\nStatement: I hereby verify ownership of this wallet for the purpose of automated settlement on the Prime Reach Media network. This signature serves as a cryptographic anchor for my profile session.`;
       const encodedMessage = new TextEncoder().encode(message);
       
-      const signedMessage = await solana.signMessage(encodedMessage, "utf8");
+      const signedMessage = await provider.signMessage(encodedMessage, "utf8");
       
       if (signedMessage) {
         setFormData(prev => ({ 
@@ -194,7 +201,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Audience Demographics</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-3">Audience Demographics</label>
                   <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({ ...p, audienceDescription: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Quantify your reach and viewer behavior..." />
                 </div>
               </div>
