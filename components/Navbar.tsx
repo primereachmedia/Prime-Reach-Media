@@ -75,21 +75,19 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
           {isLoggedIn ? (
             <button 
               onClick={onProfileClick}
-              className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white pl-2 pr-6 py-2 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl"
+              className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white pl-2 pr-6 py-2 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl max-w-[300px]"
             >
-              <div className="w-8 h-8 rounded-lg bg-jetblue/10 flex items-center justify-center overflow-hidden border border-jetblue/20">
+              <div className="w-8 h-8 rounded-lg bg-jetblue/10 flex-shrink-0 flex items-center justify-center overflow-hidden border border-jetblue/20">
                 {userImage ? (
                   <img src={userImage} className="w-full h-full object-cover" alt="User Avatar" />
                 ) : (
                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                 )}
               </div>
-              {socialAlias ? (
-                <span className="flex items-center gap-2">
-                   {socialAlias}
-                </span>
-              ) : 'Protocol Portal'}
-              <span className="text-[10px] bg-jetblue text-white px-2 py-0.5 rounded ml-1 opacity-70">{userRole}</span>
+              <span className="truncate">
+                {socialAlias || "Protocol Identity"}
+              </span>
+              <span className="text-[10px] bg-jetblue text-white px-2 py-0.5 rounded flex-shrink-0 opacity-70 uppercase">{userRole}</span>
             </button>
           ) : (
             <button 

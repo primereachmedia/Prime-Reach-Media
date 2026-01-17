@@ -41,15 +41,14 @@ interface UserState {
   image?: string | null;
 }
 
-const STORAGE_KEY = 'prm_session_v3';
+const SESSION_KEY = 'prm_session_v3';
+const ACCOUNTS_KEY = 'prm_accounts_registry_v1';
 const PLACEMENTS_KEY = 'prm_placements_production';
-
-const INITIAL_PLACEMENTS: Placement[] = [];
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub' | 'how_it_works'>('landing');
   const [user, setUser] = useState<UserState>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(SESSION_KEY);
     if (saved) return JSON.parse(saved);
     return {
       isLoggedIn: false,
@@ -65,7 +64,7 @@ const App: React.FC = () => {
   const [placements, setPlacements] = useState<Placement[]>(() => {
     const saved = localStorage.getItem(PLACEMENTS_KEY);
     if (saved) return JSON.parse(saved);
-    return INITIAL_PLACEMENTS;
+    return [];
   });
 
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({
@@ -74,7 +73,7 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
   }, [user]);
 
   useEffect(() => {
@@ -91,28 +90,31 @@ const App: React.FC = () => {
     }
   }, [user.isLoggedIn, user.hasProfile]);
 
-  const handleAddPlacement = (data: any) => {
-    const newPlacement: Placement = {
-      id: `p-${Date.now()}`,
-      image: data.image || "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
-      title: data.title,
-      date: data.date || "UPCOMING BROADCAST",
-      day: data.day || "MON", 
-      time: data.timeSegment || "AFTERNOON",
-      platforms: data.platforms,
-      category: data.genre,
-      price: data.price,
-      creator: user.companyName || "Verified Creator",
-      creatorLogo: user.image || "https://i.postimg.cc/dQTWQ6bj/Untitled-(1080-x-1000-px)-(3).png",
-      creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
-      logoPlacement: data.placement,
-      creatorEmail: user.email || "support@primereach.prm",
-      socialAlias: user.socialAlias || "",
-      isVerified: true, 
-      totalBuys: 0,
-      viewers: data.viewers
-    };
-    setPlacements(prev => [newPlacement, ...prev]);
+  const handleLoginSuccess = (email: string, role: string) => {
+    const registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+    const existingAccount = registry[email];
+
+    if (existingAccount) {
+      setUser({
+        isLoggedIn: true,
+        email,
+        role: existingAccount.role || (role as any),
+        hasProfile: true,
+        walletAddress: existingAccount.walletAddress,
+        socialAlias: existingAccount.socialAlias,
+        companyName: existingAccount.companyName,
+        image: existingAccount.image
+      });
+    } else {
+      setUser(prev => ({ 
+        ...prev, 
+        isLoggedIn: true, 
+        email, 
+        role: role as any, 
+        hasProfile: false 
+      }));
+    }
+    setAuthModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const handleProfileSave = (data: any) => {
@@ -125,6 +127,16 @@ const App: React.FC = () => {
       image: data.image
     };
     setUser(updatedUser);
+
+    const registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+    registry[user.email!] = {
+      role: user.role,
+      walletAddress: data.walletAddress,
+      socialAlias: data.socialAlias,
+      companyName: data.companyName,
+      image: data.image
+    };
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(registry));
     setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
   };
 
@@ -138,8 +150,32 @@ const App: React.FC = () => {
       socialAlias: null,
       image: null
     });
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(SESSION_KEY);
     setView('landing');
+  };
+
+  const handleAddPlacement = (data: any) => {
+    const newPlacement: Placement = {
+      id: `p-${Date.now()}`,
+      image: data.image || "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
+      title: data.title,
+      date: data.date || "UPCOMING BROADCAST",
+      day: "MON", 
+      time: data.time || "20:00",
+      platforms: data.platforms,
+      category: data.genre || "GENERAL",
+      price: data.price,
+      creator: user.companyName || user.socialAlias || "Verified Creator",
+      creatorLogo: user.image || "https://i.postimg.cc/dQTWQ6bj/Untitled-(1080-x-1000-px)-(3).png",
+      creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
+      logoPlacement: data.placement,
+      creatorEmail: user.email || "support@primereach.prm",
+      socialAlias: user.socialAlias || "",
+      isVerified: true, 
+      totalBuys: 0,
+      viewers: data.viewers || "TBD"
+    };
+    setPlacements(prev => [newPlacement, ...prev]);
   };
 
   return (
@@ -150,7 +186,7 @@ const App: React.FC = () => {
         isLoggedIn={user.isLoggedIn}
         userRole={user.role}
         onProfileClick={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
-        socialAlias={user.socialAlias}
+        socialAlias={user.socialAlias || user.email}
         userImage={user.image}
       />
       
@@ -174,6 +210,7 @@ const App: React.FC = () => {
             userWallet={user.walletAddress}
             userName={user.companyName}
             userImage={user.image}
+            placements={placements}
             onAddPlacement={handleAddPlacement}
             onEditProfile={() => setView('profile')}
             onNavigateMarketplace={() => setView('marketplace')}
@@ -225,10 +262,7 @@ const App: React.FC = () => {
         isOpen={authModal.isOpen} 
         initialMode={authModal.mode}
         onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))} 
-        onLoginSuccess={(email, role) => {
-          setUser(prev => ({ ...prev, isLoggedIn: true, email, role: role as any, hasProfile: false }));
-          setAuthModal(prev => ({ ...prev, isOpen: false }));
-        }}
+        onLoginSuccess={handleLoginSuccess}
       />
     </div>
   );
