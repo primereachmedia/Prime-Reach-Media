@@ -47,9 +47,14 @@ const PLACEMENTS_KEY = 'prm_placements_production';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub' | 'how_it_works'>('landing');
+  
   const [user, setUser] = useState<UserState>(() => {
-    const saved = localStorage.getItem(SESSION_KEY);
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Session corrupted, resetting.");
+    }
     return {
       isLoggedIn: false,
       email: null,
@@ -62,8 +67,15 @@ const App: React.FC = () => {
   });
 
   const [placements, setPlacements] = useState<Placement[]>(() => {
-    const saved = localStorage.getItem(PLACEMENTS_KEY);
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem(PLACEMENTS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (e) {
+      console.error("Placements registry corrupted, resetting.");
+    }
     return [];
   });
 
@@ -73,11 +85,15 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    } catch (e) { console.error("Storage write failed."); }
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem(PLACEMENTS_KEY, JSON.stringify(placements));
+    try {
+      localStorage.setItem(PLACEMENTS_KEY, JSON.stringify(placements));
+    } catch (e) { console.error("Storage write failed."); }
   }, [placements]);
 
   useEffect(() => {
@@ -91,8 +107,12 @@ const App: React.FC = () => {
   }, [user.isLoggedIn, user.hasProfile]);
 
   const handleLoginSuccess = (email: string, role: string) => {
-    const registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
-    const existingAccount = registry[email];
+    let registry = {};
+    try {
+      registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+    } catch (e) { registry = {}; }
+    
+    const existingAccount = (registry as any)[email];
 
     if (existingAccount) {
       setUser({
@@ -128,15 +148,18 @@ const App: React.FC = () => {
     };
     setUser(updatedUser);
 
-    const registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
-    registry[user.email!] = {
-      role: user.role,
-      walletAddress: data.walletAddress,
-      socialAlias: data.socialAlias,
-      companyName: data.companyName,
-      image: data.image
-    };
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(registry));
+    try {
+      const registry = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+      registry[user.email!] = {
+        role: user.role,
+        walletAddress: data.walletAddress,
+        socialAlias: data.socialAlias,
+        companyName: data.companyName,
+        image: data.image
+      };
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(registry));
+    } catch (e) { console.error("Registry write failure."); }
+    
     setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
   };
 
@@ -158,18 +181,18 @@ const App: React.FC = () => {
     const newPlacement: Placement = {
       id: `p-${Date.now()}`,
       image: data.image || "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
-      title: data.title,
+      title: data.title || "Untitled Broadcast",
       date: data.date || "UPCOMING BROADCAST",
       day: "MON", 
       time: data.time || "20:00",
-      platforms: data.platforms,
+      platforms: data.platforms || [],
       category: data.genre || "GENERAL",
-      price: data.price,
+      price: data.price || "0",
       creator: user.companyName || user.socialAlias || "Verified Creator",
       creatorLogo: user.image || "https://i.postimg.cc/dQTWQ6bj/Untitled-(1080-x-1000-px)-(3).png",
       creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
-      logoPlacement: data.placement,
-      creatorEmail: user.email || "support@primereach.prm",
+      logoPlacement: data.placement || "TOP RIGHT",
+      creatorEmail: user.email || "",
       socialAlias: user.socialAlias || "",
       isVerified: true, 
       totalBuys: 0,

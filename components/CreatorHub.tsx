@@ -16,6 +16,54 @@ interface CreatorHubProps {
 const platformsList = ['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'];
 const logoPositions = ['TOP LEFT', 'TOP CENTER', 'TOP RIGHT', 'BOTTOM LEFT', 'BOTTOM CENTER', 'BOTTOM RIGHT'];
 
+const WelcomeScreen: React.FC<{
+  userImage?: string | null;
+  userName?: string | null;
+  onEditProfile?: () => void;
+  onNavigateMarketplace?: () => void;
+  onStartListing: () => void;
+}> = ({ userImage, userName, onEditProfile, onNavigateMarketplace, onStartListing }) => (
+  <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-16 shadow-2xl border border-slate-100 dark:border-slate-800 transition-all">
+     <div className="max-w-3xl mx-auto text-center space-y-12">
+        <div className="space-y-4">
+           <div className="w-24 h-24 bg-jetblue/5 dark:bg-prmgold/5 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-jetblue/20 dark:border-prmgold/20 animate-pulse overflow-hidden">
+              {userImage ? (
+                <img src={userImage} className="w-full h-full object-cover" alt="User Profile" />
+              ) : (
+                <svg className="w-10 h-10 text-jetblue dark:text-prmgold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M5 13l4 4L19 7" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+           </div>
+           <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol, {userName || 'Creator'}</h2>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Mainnet Synchronized</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+           <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
+              <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 01</span>
+              <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Verify Profile</h4>
+              <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Ensure your identity anchors and Phantom wallets are linked for automated settlement.</p>
+              <button onClick={onEditProfile} className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all">My Profile</button>
+           </div>
+           <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2"><div className="w-2 h-2 bg-prmgold rounded-full animate-ping"></div></div>
+              <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 02</span>
+              <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Deploy Slot</h4>
+              <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Upload a broadcast preview and define your temporal parameters for targeting.</p>
+              <button onClick={onStartListing} className="w-full py-3 bg-jetblue text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue-bright transition-all">List New Slot</button>
+           </div>
+           <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
+              <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 03</span>
+              <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Status</h4>
+              <p className="text-[10px] text-slate-400 font-bold leading-relaxed">View your active deployments in the targeting stack and monitor settlement status.</p>
+              <button onClick={onNavigateMarketplace} className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all">View Marketplace</button>
+           </div>
+        </div>
+     </div>
+  </div>
+);
+
 const CreatorHub: React.FC<CreatorHubProps> = ({ 
   onLogout, 
   userEmail, 
@@ -43,11 +91,15 @@ const CreatorHub: React.FC<CreatorHubProps> = ({
 
   // REAL STATS CALCULATION
   const userSlots = useMemo(() => {
-    return placements.filter(p => p.creatorEmail === userEmail);
+    return Array.isArray(placements) ? placements.filter(p => p.creatorEmail === userEmail) : [];
   }, [placements, userEmail]);
 
   const totalRevenue = useMemo(() => {
-    return userSlots.reduce((acc, curr) => acc + (curr.totalBuys * parseFloat(curr.price || "0")), 0);
+    return userSlots.reduce((acc, curr) => {
+      const p = parseFloat(curr.price || "0");
+      const b = parseInt(curr.totalBuys || "0", 10);
+      return acc + (isNaN(p) || isNaN(b) ? 0 : b * p);
+    }, 0);
   }, [userSlots]);
 
   const stats = [
@@ -91,48 +143,6 @@ const CreatorHub: React.FC<CreatorHubProps> = ({
       });
     }, 2000);
   };
-
-  const WelcomeScreen = () => (
-    <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-16 shadow-2xl border border-slate-100 dark:border-slate-800 transition-all">
-       <div className="max-w-3xl mx-auto text-center space-y-12">
-          <div className="space-y-4">
-             <div className="w-24 h-24 bg-jetblue/5 dark:bg-prmgold/5 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-jetblue/20 dark:border-prmgold/20 animate-pulse overflow-hidden">
-                {userImage ? (
-                  <img src={userImage} className="w-full h-full object-cover" alt="User Profile" />
-                ) : (
-                  <svg className="w-10 h-10 text-jetblue dark:text-prmgold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M5 13l4 4L19 7" strokeWidth={3}/>
-                  </svg>
-                )}
-             </div>
-             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol, {userName || 'Creator'}</h2>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Mainnet Synchronized</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
-                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 01</span>
-                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Verify Profile</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Ensure your identity anchors and Phantom wallets are linked for automated settlement.</p>
-                <button onClick={onEditProfile} className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all">My Profile</button>
-             </div>
-             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-2"><div className="w-2 h-2 bg-prmgold rounded-full animate-ping"></div></div>
-                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 02</span>
-                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Deploy Slot</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Upload a broadcast preview and define your temporal parameters for targeting.</p>
-                <button onClick={() => setIsListingMode(true)} className="w-full py-3 bg-jetblue text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue-bright transition-all">List New Slot</button>
-             </div>
-             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
-                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 03</span>
-                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Status</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">View your active deployments in the targeting stack and monitor settlement status.</p>
-                <button onClick={onNavigateMarketplace} className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all">View Marketplace</button>
-             </div>
-          </div>
-       </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-6 transition-colors">
@@ -195,7 +205,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({
                       </div>
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40 group-hover:opacity-100 transition-all">
-                        <svg className="w-12 h-12 mb-4 text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <svg className="w-12 h-12 mb-4 text-jetblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Upload Stream Screen</span>
                       </div>
                     )}
@@ -246,7 +256,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({
                 <button type="submit" disabled={isSuccess} className={`px-24 py-10 rounded-[2.5rem] font-black text-2xl uppercase tracking-[0.6em] transition-all flex items-center gap-6 shadow-2xl transform active:scale-95 ${isSuccess ? 'bg-green-500 text-white' : 'bg-jetblue hover:bg-jetblue-bright text-white shadow-jetblue/40'}`}>
                   {isSuccess ? (
                     <>
-                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       DEPLOYED
                     </>
                   ) : 'DEPLOY TO MAINNET'}
@@ -254,7 +264,13 @@ const CreatorHub: React.FC<CreatorHubProps> = ({
              </div>
           </form>
         ) : (
-          <WelcomeScreen />
+          <WelcomeScreen 
+            userImage={userImage} 
+            userName={userName} 
+            onEditProfile={onEditProfile} 
+            onNavigateMarketplace={onNavigateMarketplace}
+            onStartListing={() => setIsListingMode(true)}
+          />
         )}
       </div>
     </div>
