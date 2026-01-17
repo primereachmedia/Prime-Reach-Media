@@ -30,9 +30,10 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const isCreator = userRole === 'creator';
 
   const getProvider = () => {
+    // Robust provider check for production
     if ("solana" in window) {
       const provider = (window as any).solana;
-      if (provider.isPhantom) return provider;
+      if (provider?.isPhantom) return provider;
     }
     return null;
   };
@@ -47,11 +48,11 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     
     setIsSigningWallet(true);
     try {
-      // Step 1: Request connection to Phantom
+      // Handshake Step 1: Secure Connection
       const resp = await provider.connect();
       const publicKey = resp.publicKey.toString();
       
-      // Step 2: Request message signature to verify identity
+      // Handshake Step 2: Cryptographic Identity Anchor
       const message = `PRM PRODUCTION PROTOCOL (v1.0)\n\nSECURE IDENTITY HANDSHAKE\n\nEntity: ${userEmail}\nWallet: ${publicKey}\nTimestamp: ${Date.now()}\n\nStatement: I hereby verify ownership of this wallet for the purpose of automated settlement on the Prime Reach Media network. This signature serves as a cryptographic anchor for my profile session.`;
       const encodedMessage = new TextEncoder().encode(message);
       
@@ -66,6 +67,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       }
     } catch (err: any) { 
       console.warn('[PRM Auth] Handshake Result:', err);
+      // User cancellation code check
       if (err?.code !== 4001) {
         alert('Cryptographic handshake failed. Ensure your hardware or software wallet is unlocked and accessible.');
       }
@@ -77,7 +79,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
-      alert("Anchor Required: You must finalize the cryptographic handshake to deploy your creator profile.");
+      alert("Anchor Required: You must finalize the cryptographic handshake to deploy your creator profile for payments.");
       return;
     }
     onSave(formData);

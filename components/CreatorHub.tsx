@@ -4,8 +4,10 @@ import React, { useState, useMemo } from 'react';
 interface CreatorHubProps {
   onLogout: () => void;
   userEmail: string;
+  userWallet?: string | null;
   onAddPlacement: (data: any) => void;
   onEditProfile?: () => void;
+  onNavigateMarketplace?: () => void;
 }
 
 interface NewSlotData {
@@ -16,7 +18,7 @@ interface NewSlotData {
   viewers: string;
   price: string;
   placement: string;
-  date: string; // Stored as ISO or formatted string
+  date: string; 
   time: string;
   timezone: string;
 }
@@ -30,7 +32,7 @@ const TIMEZONES = [
   { label: 'JST (Tokyo)', value: 'Asia/Tokyo' },
 ];
 
-const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlacement, onEditProfile }) => {
+const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet, onAddPlacement, onEditProfile, onNavigateMarketplace }) => {
   const [activeTab, setActiveTab] = useState<'slots' | 'revenue' | 'analytics'>('slots');
   const [isListingMode, setIsListingMode] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -48,7 +50,6 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
     timezone: 'America/New_York'
   });
 
-  // Calculate the 7-day window
   const dateWindow = useMemo(() => {
     const dates = [];
     for (let i = 0; i < 8; i++) {
@@ -138,6 +139,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
     
     const finalData = {
       ...formData,
+      creatorWallet: userWallet || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", // Default to treasury if no anchor found
       normalizedDate: estData.displayDate,
       normalizedTime: estData.displayTime,
       date: estData.fullDate,
@@ -202,10 +204,16 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
                   List New Slot
                 </button>
              </div>
-             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors opacity-50 grayscale pointer-events-none">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Step 03</span>
+             <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
+                <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 03</span>
                 <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Growth</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Automated revenue tracking and analytics will populate here once ads are active.</p>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">View your listings in the targeting stack and monitor automated split transactions.</p>
+                <button 
+                  onClick={onNavigateMarketplace}
+                  className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all"
+                >
+                  View Marketplace
+                </button>
              </div>
           </div>
        </div>
@@ -365,9 +373,9 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, onAddPlace
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot Pricing (USDC)</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot Pricing (SOL)</label>
                   <input 
-                    type="number" required placeholder="250"
+                    type="number" required placeholder="0.25"
                     value={formData.price} onChange={e => setFormData(p => ({ ...p, price: e.target.value }))}
                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
                   />

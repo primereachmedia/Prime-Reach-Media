@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import * as solanaWeb3 from '@solana/web3.js';
 
 interface CardProps {
   id: string;
@@ -12,6 +13,7 @@ interface CardProps {
   category: string;
   price: string;
   creator: string;
+  creatorWallet: string;
   logoPlacement: string;
   creatorEmail: string;
   twitterHandle: string;
@@ -26,7 +28,10 @@ interface MarketplaceProps {
   walletAddress?: string | null;
   onWalletConnect?: (address: string) => void;
   onAuthRequired?: () => void;
+  onCreateSlot?: () => void;
 }
+
+const TREASURY_WALLET = "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw";
 
 const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, onClick }) => (
   <div 
@@ -64,14 +69,14 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
         <span className="text-[8px] font-black px-2.5 py-1 bg-jetblue/10 text-jetblue dark:text-jetblue-light rounded-full uppercase tracking-[0.2em]">{category}</span>
         <div className="flex items-baseline gap-1">
            <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter">{price}</span>
-           <span className="text-[9px] font-black text-slate-400">USDC</span>
+           <span className="text-[9px] font-black text-slate-400">SOL</span>
         </div>
       </div>
     </div>
   </div>
 );
 
-const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walletAddress, onWalletConnect, onAuthRequired }) => {
+const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walletAddress, onWalletConnect, onAuthRequired, onCreateSlot }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPlacement, setSelectedPlacement] = useState<CardProps | null>(null);
   const [status, setStatus] = useState<'active' | 'ended'>('active');
@@ -136,46 +141,73 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
 
     const { solana } = window as any;
     
-    // Step 1: Ensure Wallet Connection
     if (!solana?.isPhantom) {
       window.open('https://phantom.app/', '_blank');
       return;
     }
 
-    if (!walletAddress) {
+    let activeWallet = walletAddress;
+    if (!activeWallet) {
        try {
          const resp = await solana.connect();
-         onWalletConnect?.(resp.publicKey.toString());
+         activeWallet = resp.publicKey.toString();
+         onWalletConnect?.(activeWallet);
        } catch (e) {
          console.warn("Wallet Connection Rejected");
          return;
        }
     }
 
-    // Step 2: Trigger Payment Request (Solana Transaction Signature)
+    if (!selectedPlacement) return;
+
     setIsPurchasing(true);
     try {
-      // Create a production-style handshake message for the transaction
-      const message = `PRM SETTLEMENT PROTOCOL (v1.0)\n\nTRANSACTION AUTHORIZATION\n\nSlot: ${selectedPlacement?.title}\nPrice: ${selectedPlacement?.price} USDC\nTimestamp: ${Date.now()}\n\nBy signing, you authorize the transfer of funds for this creator placement.`;
-      const encodedMessage = new TextEncoder().encode(message);
-      
-      // Request signature to simulate the "Ask to Pay" step
-      await solana.signMessage(encodedMessage, "utf8");
+      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+      const buyerPublicKey = new solanaWeb3.PublicKey(activeWallet!);
+      const creatorPublicKey = new solanaWeb3.PublicKey(selectedPlacement.creatorWallet || TREASURY_WALLET);
+      const treasuryPublicKey = new solanaWeb3.PublicKey(TREASURY_WALLET);
 
-      // Simulate the on-chain settlement delay
+      const totalPriceLamports = parseFloat(selectedPlacement.price) * solanaWeb3.LAMPORTS_PER_SOL;
+      const creatorShare = Math.floor(totalPriceLamports * 0.90);
+      const treasuryShare = Math.floor(totalPriceLamports * 0.10);
+
+      const transaction = new solanaWeb3.Transaction().add(
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: buyerPublicKey,
+          toPubkey: creatorPublicKey,
+          lamports: creatorShare,
+        }),
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: buyerPublicKey,
+          toPubkey: treasuryPublicKey,
+          lamports: treasuryShare,
+        })
+      );
+
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = buyerPublicKey;
+
+      const { signature } = await solana.signAndSendTransaction(transaction);
+      
+      await connection.confirmTransaction({
+        blockhash,
+        lastValidBlockHeight,
+        signature
+      }, 'confirmed');
+      
+      setIsPurchasing(false);
+      setIsSuccess(true);
       setTimeout(() => {
-        setIsPurchasing(false);
-        setIsSuccess(true);
-        setTimeout(() => {
-          setIsSuccess(false);
-          setSelectedPlacement(null);
-        }, 3000);
-      }, 2000);
+        setIsSuccess(false);
+        setSelectedPlacement(null);
+      }, 3000);
 
     } catch (err: any) {
-      console.error("Settlement Failed:", err);
+      console.error("Settlement Error:", err);
       setIsPurchasing(false);
-      alert("Settlement Canceled: The transaction was rejected by your wallet.");
+      const msg = err?.message || "Ensure your wallet has sufficient SOL for the 90/10 split transfer.";
+      alert(`Settlement Failed: ${msg}`);
     }
   };
 
@@ -234,9 +266,13 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
             />
           ))}
           {filteredPlacements.length === 0 && (
-            <div className="col-span-full py-32 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-               <p className="text-xl font-black text-slate-400 uppercase tracking-widest italic mb-6">NULL TARGETING RESULTS</p>
-               <button onClick={resetFilters} className="text-jetblue font-black uppercase text-xs tracking-[0.4em] hover:underline underline-offset-8 transition-all">Reset Active Stack</button>
+            <div className="col-span-full py-32 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800 animate-in fade-in duration-1000">
+               <div className="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 opacity-40">
+                  <svg className="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+               </div>
+               <p className="text-xl font-black text-slate-400 uppercase tracking-widest italic mb-4 leading-none">Awaiting Protocol Broadcasts</p>
+               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-10 max-w-md mx-auto leading-relaxed">The marketplace is currently synchronized with the Solana mainnet. No user-generated slots are active in this targeting stack.</p>
+               <button onClick={onCreateSlot} className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:bg-jetblue-bright transition-all">List First Slot</button>
             </div>
           )}
         </div>
@@ -385,7 +421,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">SETTLEMENT AMOUNT</p>
                <div className="flex items-baseline justify-center sm:justify-start gap-2">
                   <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{selectedPlacement?.price}</span>
-                  <span className="text-lg font-black text-slate-400 tracking-widest">USDC</span>
+                  <span className="text-lg font-black text-slate-400 tracking-widest">SOL</span>
                </div>
             </div>
             
@@ -398,11 +434,11 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                 'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
               }`}
             >
-               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'SETTLING ON SOLANA...' : 'LOCK IN SLOT'}
+               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING SPLIT...' : 'PAY & LOCK IN SLOT'}
                {isPurchasing && (
                   <div className="absolute inset-0 bg-jetblue flex items-center justify-center gap-3">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="text-xs uppercase tracking-widest">Authorizing Payment</span>
+                    <span className="text-xs uppercase tracking-widest italic">Authorizing 90/10 Split</span>
                   </div>
                )}
             </button>

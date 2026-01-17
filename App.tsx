@@ -20,6 +20,7 @@ interface Placement {
   category: string;
   price: string;
   creator: string;
+  creatorWallet: string;
   logoPlacement: string;
   creatorEmail: string;
   twitterHandle: string;
@@ -41,44 +42,8 @@ interface UserState {
 const STORAGE_KEY = 'prm_session_v2';
 const PLACEMENTS_KEY = 'prm_placements_v1';
 
-const INITIAL_PLACEMENTS: Placement[] = [
-  {
-    id: "p1",
-    image: "https://images.unsplash.com/photo-1611974714658-75d32b33688e?auto=format&fit=crop&q=80&w=800",
-    title: "CHARTMASTER LIVE",
-    date: "MONDAY JULY 13TH 2PM - 4PM",
-    day: "MON",
-    time: "AFTERNOON",
-    platforms: ["YOUTUBE", "X"],
-    category: "CRYPTO",
-    price: "450",
-    creator: "ChartMaster",
-    logoPlacement: "TOP RIGHT",
-    creatorEmail: "verified@chartmaster.prm",
-    twitterHandle: "@ChartMaster_PRM",
-    isVerified: true,
-    totalBuys: 142,
-    viewers: "12,500"
-  },
-  {
-    id: "p2",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800",
-    title: "PRO GAMING ARENA",
-    date: "TUESDAY JULY 14TH 6PM - 8PM",
-    day: "TUE",
-    time: "NIGHT",
-    platforms: ["TWITCH", "YOUTUBE", "KICK"],
-    category: "GAMING",
-    price: "1200",
-    creator: "Ninja Clone",
-    logoPlacement: "TOP LEFT",
-    creatorEmail: "contact@ninjaclone.tv",
-    twitterHandle: "@NinjaClone_Official",
-    isVerified: true,
-    totalBuys: 894,
-    viewers: "45,000"
-  }
-];
+// Initial state is now empty to prioritize real user-created inventory
+const INITIAL_PLACEMENTS: Placement[] = [];
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'marketplace' | 'profile' | 'creator_hub' | 'how_it_works'>('landing');
@@ -138,6 +103,7 @@ const App: React.FC = () => {
       category: data.genre,
       price: data.price,
       creator: user.companyName || "Verified Creator",
+      creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", // Fallback to treasury if none
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
       twitterHandle: user.twitterHandle || "",
@@ -199,8 +165,10 @@ const App: React.FC = () => {
           <CreatorHub 
             onLogout={handleLogout} 
             userEmail={user.email || ''} 
+            userWallet={user.walletAddress}
             onAddPlacement={handleAddPlacement}
             onEditProfile={() => setView('profile')}
+            onNavigateMarketplace={() => setView('marketplace')}
           />
         ) : view === 'marketplace' ? (
           <Marketplace 
@@ -209,6 +177,7 @@ const App: React.FC = () => {
             walletAddress={user.walletAddress}
             onWalletConnect={(address) => setUser(prev => ({ ...prev, walletAddress: address }))}
             onAuthRequired={() => setAuthModal({ isOpen: true, mode: 'signin' })}
+            onCreateSlot={() => setView(user.isLoggedIn ? 'creator_hub' : 'landing')}
           />
         ) : view === 'how_it_works' ? (
           <HowItWorks onBack={() => setView('landing')} onGetStarted={() => setAuthModal({ isOpen: true, mode: 'signup' })} />
