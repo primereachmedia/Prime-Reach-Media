@@ -66,7 +66,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
   }, []);
 
   const placementOptions = ['TOP LEFT', 'TOP CENTER', 'TOP RIGHT', 'BOTTOM LEFT', 'BOTTOM CENTER', 'BOTTOM RIGHT'];
-  const platformsList = ['YOUTUBE', 'X', 'TWITCH', 'KICK', 'TIKTOK', 'FACEBOOK', 'RUMBLE'];
+  const platformsList = ['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'];
   const genres = ['CRYPTO', 'GAMING', 'JUST CHATTING', 'TECH', 'SPORTS', 'LIFESTYLE'];
 
   const stats = [
@@ -139,7 +139,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
     
     const finalData = {
       ...formData,
-      creatorWallet: userWallet || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", // Default to treasury if no anchor found
+      creatorWallet: userWallet || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
       normalizedDate: estData.displayDate,
       normalizedTime: estData.displayTime,
       date: estData.fullDate,
@@ -239,24 +239,24 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
 
           <form onSubmit={handleSubmit} className="space-y-12 pb-40">
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10 italic">1. Broadast Composition (Visual Anchor)</label>
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10 italic">1. Broadcast Composition (Visual Anchor)</label>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="relative aspect-video bg-slate-100 dark:bg-slate-950 rounded-3xl border-4 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center overflow-hidden group cursor-pointer">
+                <div className="relative aspect-video bg-slate-50 dark:bg-slate-950 rounded-3xl border-4 border-dashed border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center overflow-hidden group cursor-pointer shadow-inner">
                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={handleImageUpload} accept="image/*" />
                   {formData.image ? (
                     <img src={formData.image} className="w-full h-full object-cover" alt="Stream Preview" />
                   ) : (
                     <div className="text-center p-8">
-                      <svg className="w-12 h-12 text-slate-300 mb-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      <svg className="w-12 h-12 text-slate-200 mb-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Stream Frame (16:9)</p>
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {placementOptions.map(opt => (
                     <button 
                       key={opt} type="button" onClick={() => setFormData(p => ({ ...p, placement: opt }))}
-                      className={`py-4 rounded-xl text-[9px] font-black border-2 transition-all text-center leading-tight ${formData.placement === opt ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}
+                      className={`py-5 rounded-2xl text-[9px] font-black border-2 transition-all text-center leading-tight uppercase ${formData.placement === opt ? 'bg-jetblue border-jetblue text-white shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}
                     >
                       {opt}
                     </button>
@@ -266,7 +266,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">2. Temporal Synchronization (7-Day Window)</label>
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">2. Temporal Synchronization (7-Day Window)</label>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="space-y-6">
@@ -293,7 +293,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                         <input 
                           type="time" required value={formData.time} 
                           onChange={e => setFormData(p => ({ ...p, time: e.target.value }))}
-                          className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue"
+                          className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-5 text-base font-black dark:text-white outline-none focus:border-jetblue"
                         />
                       </div>
                       <div className="space-y-4">
@@ -301,14 +301,14 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                         <select 
                           value={formData.timezone} 
                           onChange={e => setFormData(p => ({ ...p, timezone: e.target.value }))}
-                          className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-[10px] font-black dark:text-white outline-none focus:border-jetblue appearance-none"
+                          className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-5 text-[11px] font-black dark:text-white outline-none focus:border-jetblue appearance-none"
                         >
                           {TIMEZONES.map(tz => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
                         </select>
                       </div>
                    </div>
 
-                   <div className="p-8 bg-jetblue/5 dark:bg-white/5 rounded-[2rem] border border-jetblue/10 flex items-center justify-between">
+                   <div className="p-8 bg-jetblue/5 dark:bg-white/5 rounded-[2.5rem] border border-jetblue/10 flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Normalized Display</p>
                         <p className="text-xl font-black text-jetblue dark:text-prmgold italic uppercase tracking-tighter">
@@ -322,22 +322,22 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">3. Distribution & Reach Parameters</label>
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">3. Distribution & Reach Parameters</label>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Broadcast Title</label>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Broadcast Title</label>
                   <input 
-                    type="text" required placeholder="e.g. MONDAY CHART ANALYSIS LIVE"
+                    type="text" required placeholder="Onchain Revolution Live"
                     value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-transparent rounded-2xl px-8 py-6 text-lg font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Niche Segment</label>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Niche Segment</label>
                   <select 
                     value={formData.genre} onChange={e => setFormData(p => ({ ...p, genre: e.target.value }))}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue appearance-none shadow-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-transparent rounded-2xl px-8 py-6 text-lg font-black dark:text-white outline-none focus:border-jetblue appearance-none shadow-sm uppercase italic"
                   >
                     {genres.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
@@ -345,8 +345,8 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
               </div>
 
               <div className="space-y-6">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Distribution Channels</label>
-                <div className="flex flex-wrap gap-3">
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Active Distribution Channels</label>
+                <div className="flex flex-wrap gap-4">
                   {platformsList.map(p => (
                     <button 
                       key={p} type="button" onClick={() => {
@@ -355,7 +355,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                           platforms: prev.platforms.includes(p) ? prev.platforms.filter(x => x !== p) : [...prev.platforms, p]
                         }));
                       }}
-                      className={`px-6 py-3 rounded-xl text-[10px] font-black border-2 transition-all ${formData.platforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-md' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'}`}
+                      className={`px-8 py-4 rounded-xl text-[11px] font-black border-2 transition-all shadow-md uppercase ${formData.platforms.includes(p) ? 'bg-[#001A41] border-jetblue text-white' : 'bg-slate-50 dark:bg-slate-950 border-transparent text-slate-400 hover:border-jetblue/20'}`}
                     >
                       {p}
                     </button>
@@ -365,20 +365,26 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Avg CCV</label>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Avg CCV</label>
                   <input 
-                    type="number" required placeholder="5000"
+                    type="number" required placeholder="1000"
                     value={formData.viewers} onChange={e => setFormData(p => ({ ...p, viewers: e.target.value }))}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-transparent rounded-2xl px-8 py-6 text-lg font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot Pricing (SOL)</label>
-                  <input 
-                    type="number" required placeholder="0.25"
-                    value={formData.price} onChange={e => setFormData(p => ({ ...p, price: e.target.value }))}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-black dark:text-white outline-none focus:border-jetblue shadow-sm"
-                  />
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Slot Pricing (USDC)</label>
+                  <div className="relative">
+                    <input 
+                      type="number" step="0.01" required placeholder="1.00"
+                      value={formData.price} onChange={e => setFormData(p => ({ ...p, price: e.target.value }))}
+                      className="w-full bg-white dark:bg-slate-950 border-2 border-[#001A41] rounded-2xl px-8 py-6 text-lg font-black dark:text-white outline-none focus:ring-4 focus:ring-jetblue/10 transition-all shadow-sm"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1 text-slate-400">
+                      <svg className="w-4 h-4 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" /></svg>
+                      <svg className="w-4 h-4 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -387,7 +393,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
               <button 
                 type="submit" 
                 disabled={isSuccess}
-                className={`px-16 py-8 rounded-[2rem] font-black text-lg uppercase tracking-[0.5em] transition-all flex items-center gap-6 shadow-2xl ${isSuccess ? 'bg-green-500 text-white' : 'bg-jetblue hover:bg-jetblue-bright text-white hover:-translate-y-2'}`}
+                className={`px-16 py-8 rounded-[2.5rem] font-black text-lg uppercase tracking-[0.5em] transition-all flex items-center gap-6 shadow-2xl ${isSuccess ? 'bg-green-500 text-white' : 'bg-jetblue hover:bg-jetblue-bright text-white hover:-translate-y-2'}`}
               >
                 {isSuccess ? 'SLOT DEPLOYED' : 'DEPLOY TO MARKETPLACE'}
               </button>
