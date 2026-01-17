@@ -50,7 +50,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       const resp = await provider.connect();
       const publicKey = resp.publicKey.toString();
       
-      const message = `PRM PRODUCTION PROTOCOL (v1.0)\n\nSECURE IDENTITY HANDSHAKE\n\nEntity: ${userEmail}\nWallet: ${publicKey}\nTimestamp: ${Date.now()}\n\nStatement: I hereby verify ownership of this wallet for the purpose of automated USDC settlement on the Prime Reach Media network. This signature serves as a cryptographic anchor for my profile session.`;
+      const message = `PRM PRODUCTION PROTOCOL (v3.2)\n\nSECURE IDENTITY ANCHOR\n\nEntity ID: ${userEmail}\nWallet Address: ${publicKey}\nTimestamp: ${Date.now()}\n\nStatement: I hereby anchor this wallet to my protocol session for the purpose of secure USDC settlement on the Prime Reach Media network. This cryptographic signature validates my on-chain identity for all future placements.`;
       const encodedMessage = new TextEncoder().encode(message);
       
       const signedMessage = await provider.signMessage(encodedMessage, "utf8");
@@ -63,9 +63,9 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         }));
       }
     } catch (err: any) { 
-      console.warn('[PRM Auth] Handshake Result:', err);
+      console.warn('[PRM Auth] Protocol Handshake Result:', err);
       if (err?.code !== 4001) {
-        alert('Cryptographic handshake failed. Ensure your hardware or software wallet is unlocked and accessible.');
+        alert('Cryptographic handshake failed. Ensure your wallet is unlocked and accessible.');
       }
     } finally {
       setIsSigningWallet(false);
@@ -75,7 +75,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
-      alert("Anchor Required: You must finalize the cryptographic handshake to deploy your creator profile for USDC payments.");
+      alert("Anchor Required: You must finalize the cryptographic handshake to activate your profile for USDC payouts.");
       return;
     }
     onSave(formData);
@@ -121,7 +121,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">01</span>
-              Visual Identity
+              Identity Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               <div className="flex flex-col items-center">
@@ -147,18 +147,18 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
               <div className="md:col-span-2 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{isCreator ? 'Alias / Stage Name' : 'Company Name'}</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{isCreator ? 'Alias' : 'Entity Name'}</label>
                     <input type="text" required value={formData.companyName} onChange={(e) => setFormData(p => ({ ...p, companyName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue transition-colors shadow-sm" placeholder="Display Identity" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">X (Twitter) Handle</label>
-                    <input type="text" value={formData.twitterHandle} onChange={(e) => setFormData(p => ({ ...p, twitterHandle: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue transition-colors shadow-sm" placeholder="@handle" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Primary Social Alias</label>
+                    <input type="text" value={formData.twitterHandle} onChange={(e) => setFormData(p => ({ ...p, twitterHandle: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue transition-colors shadow-sm" placeholder="@alias" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Protocol ID (Email)</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Protocol UID (Email)</label>
                   <div className="w-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold text-slate-400 flex items-center gap-3">
-                    <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                     {userEmail}
                   </div>
                 </div>
@@ -169,61 +169,48 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">02</span>
-              {isCreator ? 'Reach Channels' : 'Brand Alignment'}
+              Vertical Integration
             </h2>
             
-            {isCreator ? (
-              <div className="space-y-12">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Active Pipelines</label>
-                  <div className="flex flex-wrap gap-3">
-                    {['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'].map(p => (
-                      <button 
-                        key={p} 
-                        type="button" 
-                        onClick={() => {
-                          const exists = formData.selectedPlatforms.includes(p);
-                          setFormData(prev => ({
-                            ...prev, 
-                            selectedPlatforms: exists ? prev.selectedPlatforms.filter(x => x !== p) : [...prev.selectedPlatforms, p]
-                          }));
-                        }} 
-                        className={`p-4 rounded-2xl font-black text-[10px] border-2 transition-all ${formData.selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-3">Audience Demographics</label>
-                  <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({ ...p, audienceDescription: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Quantify your reach and viewer behavior..." />
+            <div className="space-y-12">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Active Channels</label>
+                <div className="flex flex-wrap gap-3">
+                  {['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'].map(p => (
+                    <button 
+                      key={p} 
+                      type="button" 
+                      onClick={() => {
+                        const exists = formData.selectedPlatforms.includes(p);
+                        setFormData(prev => ({
+                          ...prev, 
+                          selectedPlatforms: exists ? prev.selectedPlatforms.filter(x => x !== p) : [...prev.selectedPlatforms, p]
+                        }));
+                      }} 
+                      className={`p-4 rounded-2xl font-black text-[10px] border-2 transition-all ${formData.selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-jetblue/30'}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Industry Vertical</label>
-                    <input type="text" value={formData.industry} onChange={(e) => setFormData(p => ({ ...p, industry: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. Fintech, E-comm, Web3" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Strategic KPI</label>
-                    <input type="text" value={formData.primaryObjective} onChange={(e) => setFormData(p => ({ ...p, primaryObjective: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. ROI, CAC, Awareness" />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Industry Vertical</label>
+                  <input type="text" value={formData.industry} onChange={(e) => setFormData(p => ({ ...p, industry: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. Fintech, Web3" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Mission Statement</label>
-                  <textarea rows={4} value={formData.mission} onChange={(e) => setFormData(p => ({ ...p, mission: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Define your brand mandate..." />
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Primary Metric Focus</label>
+                  <input type="text" value={formData.primaryObjective} onChange={(e) => setFormData(p => ({ ...p, primaryObjective: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. Engagement, Reach" />
                 </div>
               </div>
-            )}
+            </div>
           </section>
 
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors space-y-12">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">03</span>
-              SECURITY PROTOCOL
+              SECURITY ANCHOR
             </h2>
 
             <div className={`p-10 rounded-[2.5rem] border-2 transition-all duration-500 ${formData.walletAddress ? 'bg-green-500/5 border-green-500/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 shadow-inner'}`}>
@@ -237,13 +224,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       )}
                    </div>
                    <div className="text-left">
-                      <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Settlement Layer {!isCreator && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
+                      <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">USDC Settlement Layer</h4>
                       <div className="flex items-center gap-2">
                          <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
-                           {isCreator ? (formData.walletAddress ? (formData.isWalletSigned ? 'WALLET HANDSHAKE VERIFIED' : 'HANDSHAKE REQUIRED') : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT WALLET'}
+                           {formData.walletAddress ? (formData.isWalletSigned ? 'PROTOCOL HANDSHAKE ANCHORED' : 'SIGNATURE REQUIRED') : 'MANDATORY FOR ON-CHAIN SETTLEMENT'}
                          </p>
                          {formData.isWalletSigned && (
-                           <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">SECURE</span>
+                           <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">ACTIVE</span>
                          )}
                       </div>
                    </div>
@@ -253,7 +240,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                     <span className="px-6 py-3 bg-white dark:bg-slate-950 border-2 border-green-500/20 text-green-600 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm">
                       {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </span>
-                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null, isWalletSigned: false }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Clear Identity</button>
+                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null, isWalletSigned: false }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Wipe Anchor</button>
                   </div>
                 ) : (
                   <button 
@@ -262,7 +249,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                     onClick={handleConnectWallet} 
                     className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20 disabled:opacity-50"
                   >
-                    {isSigningWallet ? 'Syncing...' : 'Handshake via Phantom'}
+                    {isSigningWallet ? 'Executing...' : 'Anchor via Phantom'}
                   </button>
                 )}
               </div>

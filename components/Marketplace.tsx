@@ -32,7 +32,23 @@ interface MarketplaceProps {
 }
 
 const TREASURY_WALLET = "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw";
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; // Mainnet USDC
+const USDC_MINT = new solanaWeb3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+
+/**
+ * Finds the Associated Token Account (ATA) for a given wallet and mint
+ */
+async function getAssociatedTokenAddress(
+  mint: solanaWeb3.PublicKey,
+  owner: solanaWeb3.PublicKey
+): Promise<solanaWeb3.PublicKey> {
+  const [address] = await solanaWeb3.PublicKey.findProgramAddress(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return address;
+}
 
 const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, onClick }) => (
   <div 
@@ -165,23 +181,59 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
     setIsPurchasing(true);
     try {
       const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
-      const buyerPublicKey = new solanaWeb3.PublicKey(activeWallet!);
+      const buyerPubKey = new solanaWeb3.PublicKey(activeWallet!);
+      const creatorPubKey = new solanaWeb3.PublicKey(selectedPlacement.creatorWallet);
+      const treasuryPubKey = new solanaWeb3.PublicKey(TREASURY_WALLET);
       
-      // USDC Settlement logic (6 decimals)
-      // Note: In a production environment with SPL Token, we'd use getAssociatedTokenAddress and createTransferInstruction
-      // For this high-fidelity UI demo, we simulate the 90/10 USDC split verification on-chain.
       const usdcDecimals = 1_000_000;
-      const totalPriceUnits = parseFloat(selectedPlacement.price) * usdcDecimals;
+      const totalAmount = parseFloat(selectedPlacement.price) * usdcDecimals;
       
-      console.log(`Initializing USDC Settlement for ${selectedPlacement.price} USDC`);
+      const creatorShare = Math.floor(totalAmount * 0.9);
+      const treasuryShare = totalAmount - creatorShare;
 
-      // We'll proceed with a standard transaction structure that implies the SPL transfer
+      // ATAs
+      const sourceATA = await getAssociatedTokenAddress(USDC_MINT, buyerPubKey);
+      const creatorATA = await getAssociatedTokenAddress(USDC_MINT, creatorPubKey);
+      const treasuryATA = await getAssociatedTokenAddress(USDC_MINT, treasuryPubKey);
+
       const transaction = new solanaWeb3.Transaction();
+
+      /**
+       * SPL Token Transfer Instruction Helper
+       * Uses browser-compatible Uint8Array and DataView instead of Node.js Buffer
+       */
+      const createTransferInstruction = (
+        source: solanaWeb3.PublicKey,
+        destination: solanaWeb3.PublicKey,
+        owner: solanaWeb3.PublicKey,
+        amount: number
+      ) => {
+        const keys = [
+          { pubkey: source, isSigner: false, isWritable: true },
+          { pubkey: destination, isSigner: false, isWritable: true },
+          { pubkey: owner, isSigner: true, isWritable: false },
+        ];
+        // Data layout: [instruction_index (1 byte), amount (8 bytes u64)]
+        const data = new Uint8Array(9);
+        const view = new DataView(data.buffer);
+        view.setUint8(0, 3); // 3 = Transfer
+        view.setBigUint64(1, BigInt(amount), true); // Little-endian
+        
+        return new solanaWeb3.TransactionInstruction({
+          keys,
+          programId: TOKEN_PROGRAM_ID,
+          data,
+        });
+      };
+
+      // Add transfers
+      transaction.add(createTransferInstruction(sourceATA, creatorATA, buyerPubKey, creatorShare));
+      transaction.add(createTransferInstruction(sourceATA, treasuryATA, buyerPubKey, treasuryShare));
+
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
-      transaction.feePayer = buyerPublicKey;
+      transaction.feePayer = buyerPubKey;
 
-      // Request signature from Phantom
       const { signature } = await solana.signAndSendTransaction(transaction);
       setLastSignature(signature);
 
@@ -190,8 +242,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
         lastValidBlockHeight,
         signature
       }, 'confirmed');
-      
-      console.info("USDC On-chain Settlement Validated:", signature);
       
       setIsPurchasing(false);
       setIsSuccess(true);
@@ -203,10 +253,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
       }, 5000);
 
     } catch (err: any) {
-      console.error("USDC Settlement Exception:", err);
+      console.error("USDC Settlement Error:", err);
       setIsPurchasing(false);
-      const msg = err?.message || "Ensure your wallet has sufficient USDC for the 90/10 split transfer.";
-      alert(`Settlement Failed: ${msg}`);
+      alert(`Settlement Failed: ${err?.message || "Internal Protocol Error"}`);
     }
   };
 
@@ -234,7 +283,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
               </h1>
               <div className="h-[1px] w-8 bg-jetblue dark:bg-prmgold opacity-30"></div>
            </div>
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Precision Scalable USDC Monetization Layer</p>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Scalable USDC Settlement Engine // Mainnet Active</p>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-b border-slate-100 dark:border-slate-900 py-8 mb-16">
@@ -269,8 +318,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                <div className="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 opacity-40">
                   <svg className="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                </div>
-               <p className="text-xl font-black text-slate-400 uppercase tracking-widest italic mb-4 leading-none">Awaiting Protocol Broadcasts</p>
-               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-10 max-w-md mx-auto leading-relaxed">The marketplace is currently synchronized with the Solana mainnet. No user-generated USDC slots are active in this targeting stack.</p>
+               <p className="text-xl font-black text-slate-400 uppercase tracking-widest italic mb-4 leading-none">Awaiting Broadcasts</p>
+               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-10 max-w-md mx-auto leading-relaxed">The marketplace is currently synchronized with the Solana mainnet. No active slots match the targeting parameters.</p>
                <button onClick={onCreateSlot} className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:bg-jetblue-bright transition-all">List First Slot</button>
             </div>
           )}
@@ -300,7 +349,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
               </div>
 
               <div className="space-y-6">
-                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Day-Part)</h4>
+                 <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Day-Part Segments</h4>
                  <div className="flex flex-wrap gap-2">
                     {times.map(t => (
                        <button key={t} onClick={() => toggleFilter(selectedTimes, t, setSelectedTimes)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedTimes.includes(t) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{t}</button>
@@ -312,7 +361,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Distribution Pipelines</h4>
                  <div className="flex flex-wrap gap-2">
                     {platformsList.map(p => (
-                       <button key={p} onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{p}</button>
+                       <button key={p} onClick={() => toggleFilter(selectedPlatforms, p, setSelectedPlatforms)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedPlatforms.includes(p) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{p}</button>
                     ))}
                  </div>
               </div>
@@ -375,18 +424,18 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800 space-y-6">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-4">Stream Reach Parameters</h4>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-4">Stream Parameters</h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-3">
                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Broadcast Window</span>
                        <span className="text-lg font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">{selectedPlacement?.date}</span>
                     </div>
                     <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-3">
-                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Content Niche</span>
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Category</span>
                        <span className="text-lg font-black text-jetblue dark:text-jetblue-light uppercase tracking-tight">{selectedPlacement?.category}</span>
                     </div>
                     <div className="space-y-3">
-                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Distribution Pipeline</span>
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Distribution</span>
                        <div className="flex flex-wrap gap-2">
                           {selectedPlacement?.platforms.map(p => (
                             <span key={p} className="px-2.5 py-1 bg-white dark:bg-slate-800 rounded-lg text-[8px] font-black border border-slate-200 dark:border-slate-700">{p}</span>
@@ -407,7 +456,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                     </div>
                   </div>
                   <div className="space-y-2">
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Viewers (CCV)</p>
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Viewers</p>
                      <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic">{selectedPlacement?.viewers || 'N/A'}</p>
                   </div>
                </section>
@@ -434,11 +483,11 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                   'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
                 }`}
               >
-                {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'SETTLING USDC...' : 'PAY & LOCK IN SLOT'}
+                {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING SPL...' : 'PAY & LOCK IN SLOT'}
                 {isPurchasing && (
                     <div className="absolute inset-0 bg-jetblue flex items-center justify-center gap-3">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span className="text-xs uppercase tracking-widest italic">Confirming 90/10 Split</span>
+                      <span className="text-xs uppercase tracking-widest italic">Settling 90/10 Split</span>
                     </div>
                 )}
               </button>
@@ -450,7 +499,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                   rel="noopener noreferrer"
                   className="text-[9px] font-black text-slate-400 hover:text-jetblue text-center uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                 >
-                  Verify on Solana Explorer
+                  Verify Transaction
                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeWidth={3} /></svg>
                 </a>
               )}

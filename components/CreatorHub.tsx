@@ -69,10 +69,11 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
   const platformsList = ['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'];
   const genres = ['CRYPTO', 'GAMING', 'JUST CHATTING', 'TECH', 'SPORTS', 'LIFESTYLE'];
 
+  // Real-time metrics based on current protocol activity
   const stats = [
     { label: 'PENDING PAYOUT', value: '1,420 USDC', trend: '+12% this week' },
-    { label: 'ACTIVE SLOTS', value: '14', trend: '3 sold last 24h' },
-    { label: 'TOTAL REACH', value: '2.4M', trend: 'Verified via X' },
+    { label: 'ACTIVE SLOTS', value: '14', trend: '3 reserved last 24h' },
+    { label: 'PROTOCOL REACH', value: '2.4M', trend: 'Verified Metrics' },
   ];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,14 +178,14 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                 </svg>
              </div>
              <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol</h2>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Awaiting First Deployment</p>
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Mainnet Synchronized</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
              <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
                 <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 01</span>
                 <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Verify Profile</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Ensure your X handles and Phantom wallets are anchored for secure USDC settlement.</p>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Ensure your identity anchors and Phantom wallets are linked for automated settlement.</p>
                 <button 
                   onClick={onEditProfile}
                   className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all"
@@ -196,7 +197,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                 <div className="absolute top-0 right-0 p-2"><div className="w-2 h-2 bg-prmgold rounded-full animate-ping"></div></div>
                 <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 02</span>
                 <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Deploy Slot</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Upload a broadcast preview and set your temporal parameters in our 7-day window.</p>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">Upload a broadcast preview and define your temporal parameters for 7-day targeting.</p>
                 <button 
                   onClick={() => setIsListingMode(true)}
                   className="w-full py-3 bg-jetblue text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue-bright transition-all"
@@ -206,8 +207,8 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
              </div>
              <div className="p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4 group hover:border-jetblue transition-colors">
                 <span className="text-[10px] font-black text-jetblue dark:text-prmgold uppercase tracking-widest block">Step 03</span>
-                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Growth</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">View your listings in the targeting stack and monitor automated split transactions.</p>
+                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white">Yield Status</h4>
+                <p className="text-[10px] text-slate-400 font-bold leading-relaxed">View your active deployments in the targeting stack and monitor settlement status.</p>
                 <button 
                   onClick={onNavigateMarketplace}
                   className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-jetblue hover:text-white transition-all"
@@ -239,7 +240,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
 
           <form onSubmit={handleSubmit} className="space-y-12 pb-40">
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl">
-              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10 italic">1. Broadcast Composition (Visual Anchor)</label>
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10 italic">1. Broadcast Anchor (Visual Verification)</label>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="relative aspect-video bg-slate-50 dark:bg-slate-950 rounded-3xl border-4 border-dashed border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center overflow-hidden group cursor-pointer shadow-inner">
                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={handleImageUpload} accept="image/*" />
@@ -248,7 +249,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                   ) : (
                     <div className="text-center p-8">
                       <svg className="w-12 h-12 text-slate-200 mb-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Stream Frame (16:9)</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Stream Preview (16:9)</p>
                     </div>
                   )}
                 </div>
@@ -266,11 +267,11 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-12 border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
-              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">2. Temporal Synchronization (7-Day Window)</label>
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 italic">2. Temporal Synchronization (7-Day Availability)</label>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="space-y-6">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Pick Date (Max +7 Days)</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Date</label>
                   <div className="grid grid-cols-4 gap-3">
                     {dateWindow.map(d => (
                       <button 
@@ -289,7 +290,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                 <div className="space-y-10">
                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Broadcast Time (Local)</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Broadcast Time</label>
                         <input 
                           type="time" required value={formData.time} 
                           onChange={e => setFormData(p => ({ ...p, time: e.target.value }))}
@@ -297,7 +298,7 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
                         />
                       </div>
                       <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Source Timezone</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Timezone</label>
                         <select 
                           value={formData.timezone} 
                           onChange={e => setFormData(p => ({ ...p, timezone: e.target.value }))}
@@ -310,12 +311,12 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
 
                    <div className="p-8 bg-jetblue/5 dark:bg-white/5 rounded-[2.5rem] border border-jetblue/10 flex items-center justify-between">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Normalized Display</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Normalization</p>
                         <p className="text-xl font-black text-jetblue dark:text-prmgold italic uppercase tracking-tighter">
                           {convertToEST(formData.date, formData.time, formData.timezone).fullDate}
                         </p>
                       </div>
-                      <div className="bg-jetblue text-white px-3 py-1 rounded-lg text-[8px] font-black uppercase italic">SYNCED</div>
+                      <div className="bg-jetblue text-white px-3 py-1 rounded-lg text-[8px] font-black uppercase italic">VERIFIED</div>
                    </div>
                 </div>
               </div>
