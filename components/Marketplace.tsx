@@ -37,6 +37,13 @@ const USDC_MINT = new solanaWeb3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGk
 const TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
+// Production RPC Mirrors (Public Fallbacks)
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-mainnet.rpc.extrnode.com",
+  "https://rpc.ankr.com/solana"
+];
+
 async function getAssociatedTokenAddress(
   mint: solanaWeb3.PublicKey,
   owner: solanaWeb3.PublicKey
@@ -59,7 +66,6 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
         <div className="bg-black/90 text-white text-[9px] font-black px-3 py-1 rounded-lg border border-white/20 tracking-[0.3em] uppercase backdrop-blur-md">PRM AD SLOT</div>
       </div>
       
-      {/* Creator Branding on Card */}
       <div className="absolute top-6 right-6 flex items-center gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md pl-2 pr-4 py-1.5 rounded-2xl shadow-2xl border border-white/20">
         <div className="w-6 h-6 rounded-lg overflow-hidden border border-jetblue/10">
           <img src={creatorLogo} className="w-full h-full object-cover" alt={creator} />
@@ -85,7 +91,6 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
         {platforms.slice(0, 4).map(p => (
           <span key={p} className="text-[8px] font-black px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-md border border-slate-200 dark:border-slate-700 tracking-tighter uppercase">{p}</span>
         ))}
-        {platforms.length > 4 && <span className="text-[8px] font-black text-slate-400">+{platforms.length - 4}</span>}
       </div>
       
       <div className="flex items-center justify-center gap-3">
@@ -113,21 +118,19 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
   const [selectedGenre, setSelectedGenre] = useState('');
   const [selectedLogoPos, setSelectedLogoPos] = useState('');
 
-  const platformsList = ['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'];
-
   useEffect(() => {
     document.body.style.overflow = (isFilterOpen || selectedPlacement) ? 'hidden' : 'unset';
   }, [isFilterOpen, selectedPlacement]);
 
   const filteredPlacements = useMemo(() => {
-    return placements.filter(p => {
+    return Array.isArray(placements) ? placements.filter(p => {
       if (selectedDays.length > 0 && !selectedDays.includes(p.day)) return false;
       if (selectedTimes.length > 0 && !selectedTimes.includes(p.time)) return false;
       if (selectedGenre && p.category !== selectedGenre) return false;
       if (selectedLogoPos && p.logoPlacement !== selectedLogoPos) return false;
       if (selectedPlatforms.length > 0 && !p.platforms.some(plat => selectedPlatforms.includes(plat))) return false;
       return true;
-    });
+    }) : [];
   }, [placements, selectedDays, selectedTimes, selectedPlatforms, selectedGenre, selectedLogoPos]);
 
   const handleBuy = async () => {
@@ -147,8 +150,31 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
     if (!selectedPlacement) return;
     setIsPurchasing(true);
 
+    // RPC Mirror Fallback Strategy
+    let connection: solanaWeb3.Connection | null = null;
+    let blockhash: string | null = null;
+    let lastValidBlockHeight: number | null = null;
+
+    for (const endpoint of RPC_ENDPOINTS) {
+      try {
+        const conn = new solanaWeb3.Connection(endpoint, 'confirmed');
+        const latest = await conn.getLatestBlockhash();
+        connection = conn;
+        blockhash = latest.blockhash;
+        lastValidBlockHeight = latest.lastValidBlockHeight;
+        if (blockhash) break;
+      } catch (e) {
+        console.warn(`RPC Failover: ${endpoint} rejected. Trying next mirror...`);
+      }
+    }
+
+    if (!connection || !blockhash || !lastValidBlockHeight) {
+      setIsPurchasing(false);
+      alert("Protocol Congestion: Public Solana nodes are currently rate-limiting this request (403). Please wait 30 seconds or use a private RPC in settings.");
+      return;
+    }
+
     try {
-      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
       const buyerPubKey = new solanaWeb3.PublicKey(activeWallet!);
       const creatorPubKey = new solanaWeb3.PublicKey(selectedPlacement.creatorWallet);
       const treasuryPubKey = new solanaWeb3.PublicKey(TREASURY_WALLET);
@@ -183,7 +209,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
       transaction.add(createTransferInstruction(sourceATA, creatorATA, buyerPubKey, creatorShare));
       transaction.add(createTransferInstruction(sourceATA, treasuryATA, buyerPubKey, treasuryShare));
 
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = buyerPubKey;
 
@@ -198,7 +223,12 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
 
     } catch (err: any) {
       setIsPurchasing(false);
-      alert(`Settlement Error: ${err?.message || "Protocol level failure during SPL transfer."}`);
+      const msg = err?.message || "";
+      if (msg.includes("403")) {
+        alert("Settlement Error: Access Forbidden (403). The public RPC node has blocked the connection. Please try again in a few moments.");
+      } else {
+        alert(`Settlement Error: ${err?.message || "Protocol level failure during SPL transfer."}`);
+      }
     }
   };
 
