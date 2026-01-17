@@ -5,6 +5,8 @@ interface CreatorHubProps {
   onLogout: () => void;
   userEmail: string;
   userWallet?: string | null;
+  userName?: string | null;
+  userImage?: string | null;
   onAddPlacement: (data: any) => void;
   onEditProfile?: () => void;
   onNavigateMarketplace?: () => void;
@@ -13,7 +15,16 @@ interface CreatorHubProps {
 const platformsList = ['YOUTUBE', 'X', 'FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'ZORA', 'PUMPFUN', 'RUMBLE', 'TWITCH', 'KICK', 'DISCORD', 'OTHER'];
 const genres = ['CRYPTO', 'GAMING', 'JUST CHATTING', 'TECH', 'SPORTS', 'LIFESTYLE'];
 
-const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet, onAddPlacement, onEditProfile, onNavigateMarketplace }) => {
+const CreatorHub: React.FC<CreatorHubProps> = ({ 
+  onLogout, 
+  userEmail, 
+  userWallet, 
+  userName, 
+  userImage, 
+  onAddPlacement, 
+  onEditProfile, 
+  onNavigateMarketplace 
+}) => {
   const [activeTab, setActiveTab] = useState<'slots' | 'revenue' | 'analytics'>('slots');
   const [isListingMode, setIsListingMode] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -48,12 +59,16 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
     <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-16 shadow-2xl border border-slate-100 dark:border-slate-800 transition-all">
        <div className="max-w-3xl mx-auto text-center space-y-12">
           <div className="space-y-4">
-             <div className="w-24 h-24 bg-jetblue/5 dark:bg-prmgold/5 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-jetblue/20 dark:border-prmgold/20 animate-pulse">
-                <svg className="w-10 h-10 text-jetblue dark:text-prmgold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M5 13l4 4L19 7" strokeWidth={3}/>
-                </svg>
+             <div className="w-24 h-24 bg-jetblue/5 dark:bg-prmgold/5 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-jetblue/20 dark:border-prmgold/20 animate-pulse overflow-hidden">
+                {userImage ? (
+                  <img src={userImage} className="w-full h-full object-cover" alt="User Profile" />
+                ) : (
+                  <svg className="w-10 h-10 text-jetblue dark:text-prmgold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M5 13l4 4L19 7" strokeWidth={3}/>
+                  </svg>
+                )}
              </div>
-             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol</h2>
+             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">Welcome to the Protocol, {userName || 'Creator'}</h2>
              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic leading-relaxed">System Initialization Successful // Mainnet Synchronized</p>
           </div>
 
@@ -101,9 +116,18 @@ const CreatorHub: React.FC<CreatorHubProps> = ({ onLogout, userEmail, userWallet
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-6 transition-colors">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
-          <div className="space-y-2">
-            <h1 className="text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">CREATOR HUB</h1>
-            <p className="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase">{userEmail}</p>
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-2xl bg-jetblue/5 border-2 border-slate-100 dark:border-slate-800 overflow-hidden shadow-lg flex items-center justify-center">
+              {userImage ? (
+                <img src={userImage} className="w-full h-full object-cover" alt="User" />
+              ) : (
+                <span className="text-2xl font-black text-slate-300">?</span>
+              )}
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">CREATOR HUB</h1>
+              <p className="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase">{userName || userEmail}</p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
              <button onClick={() => setIsListingMode(true)} className="px-8 py-4 bg-jetblue text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-jetblue-bright transition-all">List New Slot</button>

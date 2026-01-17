@@ -8,9 +8,10 @@ interface NavbarProps {
   userRole?: string | null;
   onProfileClick?: () => void;
   socialAlias?: string | null;
+  userImage?: string | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick, socialAlias }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick, socialAlias, userImage }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -74,9 +75,15 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
           {isLoggedIn ? (
             <button 
               onClick={onProfileClick}
-              className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl"
+              className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white pl-2 pr-6 py-2 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl"
             >
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <div className="w-8 h-8 rounded-lg bg-jetblue/10 flex items-center justify-center overflow-hidden border border-jetblue/20">
+                {userImage ? (
+                  <img src={userImage} className="w-full h-full object-cover" alt="User Avatar" />
+                ) : (
+                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                )}
+              </div>
               {socialAlias ? (
                 <span className="flex items-center gap-2">
                    {socialAlias}

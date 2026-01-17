@@ -20,6 +20,7 @@ interface Placement {
   category: string;
   price: string;
   creator: string;
+  creatorLogo: string;
   creatorWallet: string;
   logoPlacement: string;
   creatorEmail: string;
@@ -37,6 +38,7 @@ interface UserState {
   walletAddress: string | null;
   socialAlias: string | null;
   companyName?: string;
+  image?: string | null;
 }
 
 const STORAGE_KEY = 'prm_session_v3';
@@ -55,7 +57,8 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      socialAlias: null
+      socialAlias: null,
+      image: null
     };
   });
 
@@ -100,6 +103,7 @@ const App: React.FC = () => {
       category: data.genre,
       price: data.price,
       creator: user.companyName || "Verified Creator",
+      creatorLogo: user.image || "https://i.postimg.cc/dQTWQ6bj/Untitled-(1080-x-1000-px)-(3).png",
       creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
@@ -112,12 +116,13 @@ const App: React.FC = () => {
   };
 
   const handleProfileSave = (data: any) => {
-    const updatedUser = { 
+    const updatedUser: UserState = { 
       ...user, 
       hasProfile: true,
       walletAddress: data.walletAddress,
       socialAlias: data.socialAlias,
-      companyName: data.companyName
+      companyName: data.companyName,
+      image: data.image
     };
     setUser(updatedUser);
     setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
@@ -130,7 +135,8 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      socialAlias: null
+      socialAlias: null,
+      image: null
     });
     localStorage.removeItem(STORAGE_KEY);
     setView('landing');
@@ -145,6 +151,7 @@ const App: React.FC = () => {
         userRole={user.role}
         onProfileClick={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
         socialAlias={user.socialAlias}
+        userImage={user.image}
       />
       
       <main className="flex-grow">
@@ -154,6 +161,8 @@ const App: React.FC = () => {
             userEmail={user.email || ''}
             initialWalletAddress={user.walletAddress}
             initialSocialAlias={user.socialAlias}
+            initialCompanyName={user.companyName}
+            initialImage={user.image}
             onUpdate={(data) => setUser(prev => ({ ...prev, ...data }))}
             onSave={handleProfileSave}
             onLogout={handleLogout}
@@ -163,6 +172,8 @@ const App: React.FC = () => {
             onLogout={handleLogout} 
             userEmail={user.email || ''} 
             userWallet={user.walletAddress}
+            userName={user.companyName}
+            userImage={user.image}
             onAddPlacement={handleAddPlacement}
             onEditProfile={() => setView('profile')}
             onNavigateMarketplace={() => setView('marketplace')}

@@ -13,10 +13,11 @@ interface CardProps {
   category: string;
   price: string;
   creator: string;
+  creatorLogo: string;
   creatorWallet: string;
   logoPlacement: string;
   creatorEmail: string;
-  twitterHandle: string;
+  socialAlias: string;
   isVerified: boolean;
   totalBuys: number;
   viewers?: string;
@@ -47,7 +48,7 @@ async function getAssociatedTokenAddress(
   return address;
 }
 
-const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, onClick }) => (
+const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, title, date, platforms, category, price, creator, creatorLogo, onClick }) => (
   <div 
     className="group flex flex-col items-center cursor-pointer animate-in fade-in duration-700"
     onClick={onClick}
@@ -57,9 +58,17 @@ const PlacementCard: React.FC<CardProps & { onClick: () => void }> = ({ image, t
       <div className="absolute bottom-6 left-6">
         <div className="bg-black/90 text-white text-[9px] font-black px-3 py-1 rounded-lg border border-white/20 tracking-[0.3em] uppercase backdrop-blur-md">PRM AD SLOT</div>
       </div>
-      <div className="absolute top-6 right-6 bg-jetblue text-white text-[10px] font-black px-4 py-1.5 rounded-xl shadow-2xl uppercase tracking-tighter">
-        {creator}
+      
+      {/* Creator Branding on Card */}
+      <div className="absolute top-6 right-6 flex items-center gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md pl-2 pr-4 py-1.5 rounded-2xl shadow-2xl border border-white/20">
+        <div className="w-6 h-6 rounded-lg overflow-hidden border border-jetblue/10">
+          <img src={creatorLogo} className="w-full h-full object-cover" alt={creator} />
+        </div>
+        <span className="text-jetblue dark:text-white text-[10px] font-black uppercase tracking-tighter">
+          {creator}
+        </span>
       </div>
+
       <div className="absolute inset-0 bg-jetblue/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[4px]">
         <div className="bg-white text-jetblue px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
           Inspect Placement
@@ -263,7 +272,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Identity Anchor</h4>
                   <div className="flex items-center gap-5 mb-8">
-                    <div className="w-16 h-16 bg-jetblue rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-xl">{selectedPlacement?.creator.charAt(0)}</div>
+                    <div className="w-16 h-16 bg-jetblue rounded-2xl overflow-hidden flex items-center justify-center border border-jetblue/20 shadow-xl">
+                      <img src={selectedPlacement?.creatorLogo} className="w-full h-full object-cover" alt={selectedPlacement?.creator} />
+                    </div>
                     <h5 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{selectedPlacement?.creator}</h5>
                   </div>
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Avg Concurrent Reach</p>
