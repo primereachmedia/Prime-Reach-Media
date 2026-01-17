@@ -23,7 +23,7 @@ interface Placement {
   creatorWallet: string;
   logoPlacement: string;
   creatorEmail: string;
-  twitterHandle: string;
+  socialAlias: string;
   isVerified: boolean;
   totalBuys: number;
   viewers?: string;
@@ -35,14 +35,13 @@ interface UserState {
   role: 'signin' | 'creator' | 'marketer' | null;
   hasProfile: boolean;
   walletAddress: string | null;
-  twitterHandle: string | null;
+  socialAlias: string | null;
   companyName?: string;
 }
 
 const STORAGE_KEY = 'prm_session_v3';
 const PLACEMENTS_KEY = 'prm_placements_production';
 
-// Marketplace initializes empty to ensure strictly user-generated content
 const INITIAL_PLACEMENTS: Placement[] = [];
 
 const App: React.FC = () => {
@@ -56,7 +55,7 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      twitterHandle: null
+      socialAlias: null
     };
   });
 
@@ -71,17 +70,14 @@ const App: React.FC = () => {
     mode: 'signin',
   });
 
-  // Sync session to local storage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   }, [user]);
 
-  // Sync placements to local storage (simulating a registry)
   useEffect(() => {
     localStorage.setItem(PLACEMENTS_KEY, JSON.stringify(placements));
   }, [placements]);
 
-  // Routing Logic
   useEffect(() => {
     if (user.isLoggedIn) {
       if (!user.hasProfile) {
@@ -107,7 +103,7 @@ const App: React.FC = () => {
       creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
-      twitterHandle: user.twitterHandle || "",
+      socialAlias: user.socialAlias || "",
       isVerified: true, 
       totalBuys: 0,
       viewers: data.viewers
@@ -120,7 +116,7 @@ const App: React.FC = () => {
       ...user, 
       hasProfile: true,
       walletAddress: data.walletAddress,
-      twitterHandle: data.twitterHandle,
+      socialAlias: data.socialAlias,
       companyName: data.companyName
     };
     setUser(updatedUser);
@@ -134,7 +130,7 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      twitterHandle: null
+      socialAlias: null
     });
     localStorage.removeItem(STORAGE_KEY);
     setView('landing');
@@ -148,7 +144,7 @@ const App: React.FC = () => {
         isLoggedIn={user.isLoggedIn}
         userRole={user.role}
         onProfileClick={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
-        twitterHandle={user.twitterHandle}
+        socialAlias={user.socialAlias}
       />
       
       <main className="flex-grow">
@@ -157,7 +153,7 @@ const App: React.FC = () => {
             userRole={user.role || 'marketer'} 
             userEmail={user.email || ''}
             initialWalletAddress={user.walletAddress}
-            initialTwitterHandle={user.twitterHandle}
+            initialSocialAlias={user.socialAlias}
             onUpdate={(data) => setUser(prev => ({ ...prev, ...data }))}
             onSave={handleProfileSave}
             onLogout={handleLogout}

@@ -153,7 +153,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onBack, onGetStarted }) => {
               </div>
               <div className="text-left">
                 <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.3em] mb-2">Verification</p>
-                <p className="text-[10px] font-mono text-white italic">X_AUTH_SECURE</p>
+                <p className="text-[10px] font-mono text-white italic">PROTOCOL_ACTIVE</p>
               </div>
               <div className="text-left">
                 <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.3em] mb-2">Global Support</p>

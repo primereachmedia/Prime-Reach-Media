@@ -7,10 +7,10 @@ interface NavbarProps {
   isLoggedIn?: boolean;
   userRole?: string | null;
   onProfileClick?: () => void;
-  twitterHandle?: string | null;
+  socialAlias?: string | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick, twitterHandle }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, userRole, onProfileClick, socialAlias }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -77,9 +77,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
               className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-jetblue text-jetblue dark:text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl"
             >
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              {twitterHandle ? (
+              {socialAlias ? (
                 <span className="flex items-center gap-2">
-                   {twitterHandle}
+                   {socialAlias}
                 </span>
               ) : 'Protocol Portal'}
               <span className="text-[10px] bg-jetblue text-white px-2 py-0.5 rounded ml-1 opacity-70">{userRole}</span>
