@@ -224,7 +224,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Temporal Parameters (Days)</h4>
                  <div className="flex flex-wrap gap-2">
                     {days.map(d => (
-                       <button key={d} onClick={() => toggleFilter(selectedDays, d, setSelectedDays)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedDays.includes(d) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{d}</button>
+                       <button key={d} onClick={() => toggleFilter(selectedDays, d, setSelectedDays)} className={`px-4 py-2 rounded-lg text-[9px] font-black border-2 transition-all ${selectedDays.includes(d) ? 'bg-jetblue border-jetblue text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'}`}>{d}</button>
                     ))}
                  </div>
               </div>
@@ -332,17 +332,13 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, onAut
                </section>
 
                <section className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Verified Identity</h4>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mb-6">Identity Anchor</h4>
                   <div className="flex items-center gap-5 mb-8">
                     <div className="w-16 h-16 bg-jetblue rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-xl">
                        {selectedPlacement?.creator.charAt(0)}
                     </div>
                     <div>
                        <h5 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{selectedPlacement?.creator}</h5>
-                       <div className={`mt-1 flex items-center gap-2 ${selectedPlacement?.isVerified ? 'text-blue-500' : 'text-red-400'}`}>
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                          <span className="text-[7px] font-black uppercase tracking-widest">{selectedPlacement?.isVerified ? 'IDENTITY VERIFIED' : 'PENDING AUDIT'}</span>
-                       </div>
                     </div>
                   </div>
                   <div className="space-y-2">

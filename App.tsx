@@ -35,7 +35,6 @@ interface UserState {
   hasProfile: boolean;
   walletAddress: string | null;
   twitterHandle: string | null;
-  isTwitterVerified: boolean;
   companyName?: string;
 }
 
@@ -92,8 +91,7 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      twitterHandle: null,
-      isTwitterVerified: false
+      twitterHandle: null
     };
   });
 
@@ -128,26 +126,6 @@ const App: React.FC = () => {
     }
   }, [user.isLoggedIn, user.hasProfile]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-
-    if (code && state) {
-      const storedState = localStorage.getItem('prm_x_auth_state');
-      if (state === storedState) {
-        setUser(prev => ({
-          ...prev,
-          twitterHandle: '@VerifiedUser',
-          isTwitterVerified: true,
-          isLoggedIn: true
-        }));
-        localStorage.removeItem('prm_x_auth_state');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-  }, []);
-
   const handleAddPlacement = (data: any) => {
     const newPlacement: Placement = {
       id: `p-${Date.now()}`,
@@ -162,8 +140,8 @@ const App: React.FC = () => {
       creator: user.companyName || "Verified Creator",
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
-      twitterHandle: user.twitterHandle || "Unauthorized X",
-      isVerified: user.isTwitterVerified,
+      twitterHandle: user.twitterHandle || "",
+      isVerified: true, // Verification concept removed, all users trusted for MVP
       totalBuys: 0,
       viewers: data.viewers
     };
@@ -176,7 +154,6 @@ const App: React.FC = () => {
       hasProfile: true,
       walletAddress: data.walletAddress,
       twitterHandle: data.twitterHandle,
-      isTwitterVerified: data.isTwitterVerified,
       companyName: data.companyName
     };
     setUser(updatedUser);
@@ -190,8 +167,7 @@ const App: React.FC = () => {
       role: null,
       hasProfile: false,
       walletAddress: null,
-      twitterHandle: null,
-      isTwitterVerified: false
+      twitterHandle: null
     });
     localStorage.removeItem(STORAGE_KEY);
     setView('landing');
@@ -206,7 +182,6 @@ const App: React.FC = () => {
         userRole={user.role}
         onProfileClick={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
         twitterHandle={user.twitterHandle}
-        isVerified={user.isTwitterVerified}
       />
       
       <main className="flex-grow">
@@ -216,7 +191,6 @@ const App: React.FC = () => {
             userEmail={user.email || ''}
             initialWalletAddress={user.walletAddress}
             initialTwitterHandle={user.twitterHandle}
-            isTwitterVerified={user.isTwitterVerified}
             onUpdate={(data) => setUser(prev => ({ ...prev, ...data }))}
             onSave={handleProfileSave}
             onLogout={handleLogout}
