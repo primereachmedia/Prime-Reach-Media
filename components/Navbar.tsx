@@ -33,7 +33,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-bold text-jetblue dark:text-white tracking-tight leading-none">Prime Reach Media</span>
-            <span className="text-[7px] font-black text-prmgold uppercase tracking-[0.3em] mt-1">v1.0 Production</span>
+            <div className="flex items-center gap-2 mt-1">
+               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+               <span className="text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Solana Mainnet Active</span>
+            </div>
           </div>
         </div>
         

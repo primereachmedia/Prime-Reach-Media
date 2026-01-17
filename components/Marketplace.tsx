@@ -82,6 +82,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
   const [status, setStatus] = useState<'active' | 'ended'>('active');
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [lastSignature, setLastSignature] = useState<string | null>(null);
   
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -162,6 +163,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
 
     setIsPurchasing(true);
     try {
+      // Connect to Mainnet for real money settlement
       const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
       const buyerPublicKey = new solanaWeb3.PublicKey(activeWallet!);
       const creatorPublicKey = new solanaWeb3.PublicKey(selectedPlacement.creatorWallet || TREASURY_WALLET);
@@ -188,23 +190,31 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = buyerPublicKey;
 
+      // Trigger Phantom and wait for user signature
       const { signature } = await solana.signAndSendTransaction(transaction);
-      
+      setLastSignature(signature);
+
+      // CRITICAL: Confirm the transaction on the blockchain before moving to success state
       await connection.confirmTransaction({
         blockhash,
         lastValidBlockHeight,
         signature
       }, 'confirmed');
       
+      console.info("On-chain Settlement Validated:", signature);
+      
       setIsPurchasing(false);
       setIsSuccess(true);
+      
+      // Auto-dismiss detail view after success delay
       setTimeout(() => {
         setIsSuccess(false);
+        setLastSignature(null);
         setSelectedPlacement(null);
-      }, 3000);
+      }, 5000);
 
     } catch (err: any) {
-      console.error("Settlement Error:", err);
+      console.error("Settlement Exception:", err);
       setIsPurchasing(false);
       const msg = err?.message || "Ensure your wallet has sufficient SOL for the 90/10 split transfer.";
       alert(`Settlement Failed: ${msg}`);
@@ -425,23 +435,37 @@ const Marketplace: React.FC<MarketplaceProps> = ({ placements, isLoggedIn, walle
                </div>
             </div>
             
-            <button 
-              disabled={isPurchasing || isSuccess}
-              onClick={handleBuy}
-              className={`w-full sm:w-auto min-w-[280px] h-20 rounded-[1.5rem] font-black text-lg uppercase tracking-[0.4em] shadow-xl transition-all flex items-center justify-center gap-4 relative overflow-hidden ${
-                isSuccess ? 'bg-green-500 text-white' : 
-                isPurchasing ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 
-                'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
-              }`}
-            >
-               {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'EXECUTING SPLIT...' : 'PAY & LOCK IN SLOT'}
-               {isPurchasing && (
-                  <div className="absolute inset-0 bg-jetblue flex items-center justify-center gap-3">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="text-xs uppercase tracking-widest italic">Authorizing 90/10 Split</span>
-                  </div>
-               )}
-            </button>
+            <div className="flex flex-col gap-3 w-full sm:w-auto">
+              <button 
+                disabled={isPurchasing || isSuccess}
+                onClick={handleBuy}
+                className={`w-full sm:w-auto min-w-[280px] h-20 rounded-[1.5rem] font-black text-lg uppercase tracking-[0.4em] shadow-xl transition-all flex items-center justify-center gap-4 relative overflow-hidden ${
+                  isSuccess ? 'bg-green-500 text-white' : 
+                  isPurchasing ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 
+                  'bg-prmgold hover:bg-prmgold-dark text-white hover:-translate-y-1 active:scale-95'
+                }`}
+              >
+                {isSuccess ? 'SLOT RESERVED' : isPurchasing ? 'SETTLING ON-CHAIN...' : 'PAY & LOCK IN SLOT'}
+                {isPurchasing && (
+                    <div className="absolute inset-0 bg-jetblue flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="text-xs uppercase tracking-widest italic">Confirming 90/10 Split</span>
+                    </div>
+                )}
+              </button>
+              
+              {isSuccess && lastSignature && (
+                <a 
+                  href={`https://explorer.solana.com/tx/${lastSignature}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[9px] font-black text-slate-400 hover:text-jetblue text-center uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                >
+                  Verify on Solana Explorer
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeWidth={3} /></svg>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>

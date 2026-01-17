@@ -39,10 +39,10 @@ interface UserState {
   companyName?: string;
 }
 
-const STORAGE_KEY = 'prm_session_v2';
-const PLACEMENTS_KEY = 'prm_placements_v1';
+const STORAGE_KEY = 'prm_session_v3';
+const PLACEMENTS_KEY = 'prm_placements_production';
 
-// Initial state is now empty to prioritize real user-created inventory
+// Marketplace initializes empty to ensure strictly user-generated content
 const INITIAL_PLACEMENTS: Placement[] = [];
 
 const App: React.FC = () => {
@@ -71,22 +71,23 @@ const App: React.FC = () => {
     mode: 'signin',
   });
 
+  // Sync session to local storage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   }, [user]);
 
+  // Sync placements to local storage (simulating a registry)
   useEffect(() => {
     localStorage.setItem(PLACEMENTS_KEY, JSON.stringify(placements));
   }, [placements]);
 
+  // Routing Logic
   useEffect(() => {
     if (user.isLoggedIn) {
       if (!user.hasProfile) {
         setView('profile');
-      } else {
-        if (view === 'landing' || view === 'profile') {
-          setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
-        }
+      } else if (view === 'landing' || view === 'profile') {
+        setView(user.role === 'creator' ? 'creator_hub' : 'marketplace');
       }
     }
   }, [user.isLoggedIn, user.hasProfile]);
@@ -103,7 +104,7 @@ const App: React.FC = () => {
       category: data.genre,
       price: data.price,
       creator: user.companyName || "Verified Creator",
-      creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", // Fallback to treasury if none
+      creatorWallet: user.walletAddress || "ErR6aaQDcaPnx8yi3apPty4T1PeJAmXjuF7ZhTpUjiaw", 
       logoPlacement: data.placement,
       creatorEmail: user.email || "support@primereach.prm",
       twitterHandle: user.twitterHandle || "",
@@ -177,7 +178,7 @@ const App: React.FC = () => {
             walletAddress={user.walletAddress}
             onWalletConnect={(address) => setUser(prev => ({ ...prev, walletAddress: address }))}
             onAuthRequired={() => setAuthModal({ isOpen: true, mode: 'signin' })}
-            onCreateSlot={() => setView(user.isLoggedIn ? 'creator_hub' : 'landing')}
+            onCreateSlot={() => setView(user.role === 'creator' ? 'creator_hub' : 'marketplace')}
           />
         ) : view === 'how_it_works' ? (
           <HowItWorks onBack={() => setView('landing')} onGetStarted={() => setAuthModal({ isOpen: true, mode: 'signup' })} />
@@ -197,7 +198,7 @@ const App: React.FC = () => {
                 <span className="text-xl font-black text-jetblue dark:text-white uppercase tracking-tighter">Prime Reach Media</span>
              </div>
              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                Automated placement marketplace for the high-efficiency creator economy.
+                The production portal for high-efficiency creator monetization. Built on Solana.
              </p>
           </div>
           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
