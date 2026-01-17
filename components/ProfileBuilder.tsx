@@ -21,7 +21,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     image: null as string | null,
     walletAddress: initialWalletAddress || null as string | null,
     twitterHandle: initialTwitterHandle || '',
-    isWalletSigned: false, // MANDATORY: Forced to false on every mount to ensure fresh signature requirement
+    isWalletSigned: false, // PRODUCTION: Must be false on every mount for re-verification
     selectedPlatforms: [] as string[]
   });
 
@@ -44,7 +44,8 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
       const publicKey = resp.publicKey.toString();
       
       // Step 2: Request message signature to verify identity
-      const message = `Prime Reach Media (PRM)\n\nSECURE IDENTITY HANDSHAKE\n\nUser: ${userEmail}\nTimestamp: ${Date.now()}\n\nBy signing this message, you authorize this wallet for automated USDC settlement on the PRM network.`;
+      // Message hardened for production legal/technical compliance
+      const message = `PRM PRODUCTION PROTOCOL (v1.0)\n\nSECURE IDENTITY HANDSHAKE\n\nEntity: ${userEmail}\nWallet: ${publicKey}\nTimestamp: ${Date.now()}\n\nStatement: I hereby verify ownership of this wallet for the purpose of automated settlement on the Prime Reach Media network. This signature serves as a cryptographic anchor for my profile session.`;
       const encodedMessage = new TextEncoder().encode(message);
       
       const signedMessage = await solana.signMessage(encodedMessage, "utf8");
@@ -57,9 +58,9 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
         }));
       }
     } catch (err: any) { 
-      console.warn('[PRM Auth] Wallet Error:', err);
+      console.warn('[PRM Auth] Handshake Result:', err);
       if (err?.code !== 4001) {
-        alert('Authentication failed. Please ensure your wallet is unlocked and try again.');
+        alert('Cryptographic handshake failed. Ensure your hardware or software wallet is unlocked and accessible.');
       }
     } finally {
       setIsSigningWallet(false);
@@ -69,7 +70,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreator && (!formData.walletAddress || !formData.isWalletSigned)) {
-      alert("Verification Required: Creators must sign the authentication message with a Phantom wallet to anchor their profile.");
+      alert("Anchor Required: You must finalize the cryptographic handshake to deploy your creator profile.");
       return;
     }
     onSave(formData);
@@ -86,7 +87,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
     return (
       <div className="min-h-screen bg-jetblue flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
         <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-6"></div>
-        <h2 className="text-xl font-black text-white uppercase italic tracking-widest">WIPING SESSION DATA</h2>
+        <h2 className="text-xl font-black text-white uppercase italic tracking-widest">WIPING SESSION KEYSPACE</h2>
       </div>
     );
   }
@@ -103,13 +104,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
              className="px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-red-500/50 hover:text-red-500 transition-all flex items-center gap-3 shadow-sm group"
            >
              <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-red-500 transition-colors"></div>
-             <span className="text-[9px] font-black text-slate-500 group-hover:text-red-500 uppercase tracking-widest">Disconnect Session</span>
+             <span className="text-[9px] font-black text-slate-500 group-hover:text-red-500 uppercase tracking-widest">Terminate Session</span>
            </button>
         </div>
 
         <div className="mb-16 text-center">
           <h1 className="text-5xl md:text-6xl font-black text-jetblue dark:text-white uppercase italic tracking-tight leading-none mb-4 px-6">PROFILE ANCHOR</h1>
-          <p className="text-[10px] font-black text-slate-400 tracking-[0.4em] uppercase italic">ENCRYPTED PORTAL ACCESS: {userRole.toUpperCase()}</p>
+          <p className="text-[10px] font-black text-slate-400 tracking-[0.4em] uppercase italic">PRODUCTION PORTAL ACCESS: {userRole.toUpperCase()}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-12">
@@ -143,8 +144,8 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
               <div className="md:col-span-2 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{isCreator ? 'Creator Alias' : 'Company Name'}</label>
-                    <input type="text" required value={formData.companyName} onChange={(e) => setFormData(p => ({ ...p, companyName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue transition-colors shadow-sm" placeholder="Display Name" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{isCreator ? 'Alias / Stage Name' : 'Company Name'}</label>
+                    <input type="text" required value={formData.companyName} onChange={(e) => setFormData(p => ({ ...p, companyName: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue transition-colors shadow-sm" placeholder="Display Identity" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">X (Twitter) Handle</label>
@@ -152,7 +153,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">System Identity (Email)</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Protocol ID (Email)</label>
                   <div className="w-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold text-slate-400 flex items-center gap-3">
                     <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     {userEmail}
@@ -166,13 +167,13 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
           <section className="bg-white dark:bg-slate-900 p-8 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-10 flex items-center gap-4">
               <span className="w-10 h-10 rounded-xl bg-jetblue flex items-center justify-center text-white text-xs font-black shadow-lg">02</span>
-              {isCreator ? 'Reach Distribution' : 'Brand Alignment'}
+              {isCreator ? 'Reach Channels' : 'Brand Alignment'}
             </h2>
             
             {isCreator ? (
               <div className="space-y-12">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Distribution Channels</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Active Pipelines</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     {['YOUTUBE', 'X', 'TIKTOK', 'FACEBOOK', 'INSTAGRAM', 'TWITCH', 'KICK', 'PUMPFUN', 'ZORA', 'RUMBLE', 'DISCORD'].map(p => (
                       <button 
@@ -193,8 +194,8 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Audience Context</label>
-                  <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({ ...p, audienceDescription: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Describe your average reach, demographics, and viewer engagement..." />
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Audience Demographics</label>
+                  <textarea rows={4} value={formData.audienceDescription} onChange={(e) => setFormData(p => ({ ...p, audienceDescription: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Quantify your reach and viewer behavior..." />
                 </div>
               </div>
             ) : (
@@ -202,16 +203,16 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Industry Vertical</label>
-                    <input type="text" value={formData.industry} onChange={(e) => setFormData(p => ({ ...p, industry: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. SaaS, E-commerce, Gaming" />
+                    <input type="text" value={formData.industry} onChange={(e) => setFormData(p => ({ ...p, industry: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. Fintech, E-comm, Web3" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Primary Marketing KPI</label>
-                    <input type="text" value={formData.primaryObjective} onChange={(e) => setFormData(p => ({ ...p, primaryObjective: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. Conversion, ROI, Brand Voice" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Strategic KPI</label>
+                    <input type="text" value={formData.primaryObjective} onChange={(e) => setFormData(p => ({ ...p, primaryObjective: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-8 py-5 text-sm font-bold dark:text-white outline-none focus:border-jetblue shadow-sm" placeholder="e.g. ROI, CAC, Awareness" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Strategic Mandate</label>
-                  <textarea rows={4} value={formData.mission} onChange={(e) => setFormData(p => ({ ...p, mission: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Summarize your brand strategy and creator partnership expectations." />
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Mission Statement</label>
+                  <textarea rows={4} value={formData.mission} onChange={(e) => setFormData(p => ({ ...p, mission: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] px-8 py-8 text-sm font-bold dark:text-white outline-none focus:border-jetblue resize-none shadow-sm transition-all" placeholder="Define your brand mandate..." />
                 </div>
               </div>
             )}
@@ -239,10 +240,10 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Settlement Layer {!isCreator && <span className="text-[10px] text-slate-400 font-bold ml-2">(OPTIONAL)</span>}</h4>
                       <div className="flex items-center gap-2">
                          <p className={`text-[9px] font-bold uppercase tracking-[0.2em] italic leading-tight ${formData.walletAddress ? 'text-green-500' : 'text-slate-400'}`}>
-                           {isCreator ? (formData.walletAddress ? (formData.isWalletSigned ? 'WALLET SIGNED & VERIFIED' : 'SIGNATURE REQUIRED') : 'MANDATORY FOR AUTOMATED USDC PAYOUTS') : 'PREFERRED MERCHANT CHECKOUT WALLET'}
+                           {isCreator ? (formData.walletAddress ? (formData.isWalletSigned ? 'WALLET HANDSHAKE VERIFIED' : 'HANDSHAKE REQUIRED') : 'MANDATORY FOR AUTOMATED PAYOUTS') : 'PREFERRED MERCHANT WALLET'}
                          </p>
                          {formData.isWalletSigned && (
-                           <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">SECURE HANDSHAKE</span>
+                           <span className="bg-green-500 text-white text-[7px] px-1.5 py-0.5 rounded font-black">SECURE</span>
                          )}
                       </div>
                    </div>
@@ -252,7 +253,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                     <span className="px-6 py-3 bg-white dark:bg-slate-950 border-2 border-green-500/20 text-green-600 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm">
                       {formData.walletAddress.slice(0, 6)}...{formData.walletAddress.slice(-6)}
                     </span>
-                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null, isWalletSigned: false }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Disconnect Wallet</button>
+                    <button type="button" onClick={() => setFormData(p => ({ ...p, walletAddress: null, isWalletSigned: false }))} className="text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Clear Identity</button>
                   </div>
                 ) : (
                   <button 
@@ -261,7 +262,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
                     onClick={handleConnectWallet} 
                     className="px-10 py-4 bg-jetblue text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-jetblue-bright transition-all shadow-xl shadow-jetblue/20 disabled:opacity-50"
                   >
-                    {isSigningWallet ? 'Check Wallet...' : 'Sign in with Phantom'}
+                    {isSigningWallet ? 'Syncing...' : 'Handshake via Phantom'}
                   </button>
                 )}
               </div>
@@ -273,7 +274,7 @@ const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ userRole, userEmail, in
               type="submit" 
               className="w-full sm:w-auto px-20 py-8 bg-jetblue text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.5em] hover:bg-jetblue-bright transition-all shadow-2xl shadow-jetblue/30 flex items-center justify-center gap-6 group"
             >
-              Finalize Portal Access
+              Commit Portal Profile
               <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </button>
           </div>

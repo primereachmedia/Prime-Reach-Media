@@ -31,7 +31,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
           <div className="px-2.5 py-1 bg-jetblue rounded flex items-center justify-center shadow-md shadow-jetblue/20 group-hover:bg-jetblue-bright transition-colors">
             <span className="text-white font-black text-xs tracking-tighter">PRM</span>
           </div>
-          <span className="text-xl font-bold text-jetblue dark:text-white tracking-tight">Prime Reach Media</span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-jetblue dark:text-white tracking-tight leading-none">Prime Reach Media</span>
+            <span className="text-[7px] font-black text-prmgold uppercase tracking-[0.3em] mt-1">v1.0 Production</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -73,7 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
                 <span className="flex items-center gap-2">
                    {twitterHandle}
                 </span>
-              ) : 'My Profile'}
+              ) : 'Protocol Portal'}
               <span className="text-[9px] bg-jetblue text-white px-1.5 py-0.5 rounded ml-1 opacity-70">{userRole}</span>
             </button>
           ) : (
@@ -81,7 +84,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogoClick, onAuthClick, isLoggedIn, u
               onClick={() => onAuthClick('signin')}
               className="bg-jetblue text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jetblue-bright transition-all shadow-lg shadow-jetblue/20 border border-jetblue/10"
             >
-              Account Access
+              Secure Portal Access
             </button>
           )}
         </div>
