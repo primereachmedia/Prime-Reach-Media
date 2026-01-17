@@ -190,18 +190,25 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-white dark:bg-slate-950 py-16 px-6 border-t border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
-          <div className="space-y-6 max-w-sm">
-             <div className="flex items-center gap-3">
-                <div className="px-2 py-0.5 bg-jetblue rounded text-white font-black text-[10px]">PRM</div>
-                <span className="text-xl font-black text-jetblue dark:text-white uppercase tracking-tighter">Prime Reach Media</span>
+      <footer className="bg-white dark:bg-slate-950 py-24 px-6 border-t border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="space-y-8 max-w-lg text-center md:text-left">
+             <div className="flex flex-col md:flex-row items-center gap-8">
+                <img 
+                  src="https://i.postimg.cc/dQTWQ6bj/Untitled-(1080-x-1000-px)-(3).png" 
+                  alt="PRM Logo" 
+                  className="h-48 w-auto object-contain drop-shadow-lg" 
+                />
+                <div className="flex flex-col">
+                  <span className="text-3xl font-black text-jetblue dark:text-white uppercase tracking-tighter italic">Prime Reach Media</span>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-[0.5em] mt-2">Precision Protocol v3.2</p>
+                </div>
              </div>
-             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                The production portal for high-efficiency creator monetization. Built on Solana.
+             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium max-w-sm">
+                The production portal for high-efficiency creator monetization. Scale your brand through the automated Solana settlement layer.
              </p>
           </div>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="text-[12px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-200 dark:border-slate-800 pl-8 h-12 flex items-center">
              © 2025 PRIME REACH MEDIA LTD.
           </div>
         </div>
